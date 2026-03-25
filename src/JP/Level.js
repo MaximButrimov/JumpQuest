@@ -257,7 +257,7 @@ class Level {
     pm.createStatic(0,    752, 3200, 'grass');
 
     // ── Plataformas sección 1 ────────────────────────────
-    pm.createStatic(100, 600, 160, 'grass');
+    pm.createStatic(100, 650, 160, 'grass');
     pm.createStatic(350, 520, 128, 'stone');
     pm.createStatic(550, 440, 96,  'grass');
     pm.createStatic(750, 360, 160, 'stone');
