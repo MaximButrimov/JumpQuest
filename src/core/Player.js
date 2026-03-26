@@ -371,3 +371,4 @@ class Player {
   get body()   { return this.sprite.body; }
   get gameObject() { return this.sprite; }
 }
+export default Player;

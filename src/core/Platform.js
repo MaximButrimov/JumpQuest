@@ -224,3 +224,4 @@ class PlatformManager {
     this.scene.physics.add.collider(enemyGroup, this.movingGroup);
   }
 }
+export default PlatformManager;

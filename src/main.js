@@ -1,3 +1,8 @@
+import PlatformManager from './core/Platform.js';
+import Player from './core/Player.js';
+import Level from './levels/Level.js';
+import Level1Data from './levels/Level1.js';
+
 /**
  * ============================================================
  *  JumpQuest – main.js
@@ -122,10 +127,14 @@ class BootScene extends Phaser.Scene {
   _synth(key, ctx, sr, buildFn) {
     try {
       const buffer = buildFn(ctx, sr);
-      // Guardamos directamente en el gestor de sonido de Phaser 3
-      this.sound.decodeAudio(key, buffer);
+      // decodeAudio() espera un ArrayBuffer crudo, no un AudioBuffer ya decodificado.
+      // Como ya tenemos el AudioBuffer construido proceduralmente, lo registramos
+      // directamente en la caché de Phaser sin pasar por decodeAudio().
+      if (!this.cache.audio.exists(key)) {
+        this.cache.audio.add(key, buffer);
+      }
     } catch (e) {
-      // Si el contexto no está listo aún, lo ignoramos silenciosamente
+      console.warn('[JumpQuest] _synth: no se pudo registrar el sonido "' + key + '":', e);
     }
   }
 }
@@ -673,7 +682,7 @@ class GameScene extends Phaser.Scene {
     this.platformManager = new PlatformManager(this);
 
     // ── Nivel ─────────────────────────────────────────────
-    this.level = new Level(this, this.platformManager);
+   this.level = new Level(this, this.platformManager, Level1Data);
 
     // ── Jugador ───────────────────────────────────────────
     this.player = new Player(this, 80, 680);
