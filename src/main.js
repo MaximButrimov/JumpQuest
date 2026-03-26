@@ -670,8 +670,15 @@ class WinScene extends Phaser.Scene {
 class GameScene extends Phaser.Scene {
   constructor() { super({ key: 'GameScene' }); }
 
+  init(data) {
+    // Recibe datos desde MapScene o usa Level1 como fallback directo
+    this._levelData = data.levelData || Level1Data;
+    this._levelName = data.levelName || '1-1';
+    this._levelId   = data.levelId   || 'level_1';
+  }
+
   create() {
-    const WORLD_W = 3200;
+    const WORLD_W = this._levelData.worldWidth || 3200;
     const WORLD_H = 800;
 
     // Límites del mundo físico
@@ -682,7 +689,7 @@ class GameScene extends Phaser.Scene {
     this.platformManager = new PlatformManager(this);
 
     // ── Nivel ─────────────────────────────────────────────
-   this.level = new Level(this, this.platformManager, Level1Data);
+    this.level = new Level(this, this.platformManager, this._levelData);
 
     // ── Jugador ───────────────────────────────────────────
     this.player = new Player(this, 80, 680);
