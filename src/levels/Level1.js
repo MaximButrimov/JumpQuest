@@ -135,7 +135,8 @@ export default {
     ],
 
     enemies: [
-        // Sección 1 (velocidad baja, aprende mecánicas)
+        // ── Slimes (suelo y plataformas) ─────────────────────
+        // Sección 1
         { x: 200,  y: 736, speed:  60 },
         { x: 500,  y: 424, speed:  50 },
         { x: 900,  y: 744, speed:  70 },
@@ -150,22 +151,40 @@ export default {
         { x: 2700, y: 444, speed:  75 },
         { x: 3000, y: 736, speed:  90 },
 
-        // Sección 5 — puente roto (guardianes en piedras)
+        // Sección 5 — puente roto
         { x: 3350, y: 664, speed:  85 },
         { x: 3580, y: 504, speed:  90 },
         { x: 3960, y: 484, speed:  80 },
 
-        // Sección 6 — torre (guardianes en escalones)
+        // Sección 6 — torre
         { x: 4060, y: 736, speed: 100 },
         { x: 4210, y: 564, speed:  90 },
         { x: 4290, y: 364, speed:  95 },
         { x: 4610, y: 364, speed:  85 },
 
-        // Sección 7 — tramo final (máxima dificultad)
+        // Sección 7 — tramo final
         { x: 4760, y: 736, speed: 110 },
         { x: 4990, y: 544, speed: 100 },
         { x: 5160, y: 444, speed: 115 },
         { x: 5340, y: 364, speed: 105 },
+
+        // ── Murciélagos flotantes ─────────────────────────────
+        // Sección 1-2: introducción suave, amplitud pequeña
+        { x: 420,  y: 390, speed: 55, type: 'bat', floatAmplitude: 28 },
+        { x: 1280, y: 330, speed: 65, type: 'bat', floatAmplitude: 32 },
+
+        // Sección 3-4: altura media
+        { x: 1950, y: 310, speed: 70, type: 'bat', floatAmplitude: 40 },
+        { x: 2650, y: 260, speed: 75, type: 'bat', floatAmplitude: 38 },
+
+        // Sección 5: patrulla los huecos del puente roto
+        { x: 3480, y: 360, speed: 80, type: 'bat', floatAmplitude: 45 },
+        { x: 3820, y: 320, speed: 85, type: 'bat', floatAmplitude: 42 },
+
+        // Sección 6-7: más agresivos, alta amplitud
+        { x: 4180, y: 250, speed: 90, type: 'bat', floatAmplitude: 50 },
+        { x: 4800, y: 280, speed: 95, type: 'bat', floatAmplitude: 48 },
+        { x: 5200, y: 240, speed: 100, type: 'bat', floatAmplitude: 50 },
     ],
 
     exit: { x: 5490, y: 268 },

@@ -2,6 +2,7 @@ import PlatformManager from './core/Platform.js';
 import Player from './core/Player.js';
 import Level from './levels/Level.js';
 import Level1Data from './levels/Level1.js';
+import MapScene from './map/MapScene.js';
 
 /**
  * ============================================================
@@ -210,7 +211,7 @@ class MenuScene extends Phaser.Scene {
     // ── Botones ──────────────────────────────────────────
     this._buildButton(W / 2, H * 0.62, '▶  JUGAR', 0x3ddc84, 0x2ab866, () => {
       this.cameras.main.fade(400, 0, 0, 0);
-      this.time.delayedCall(400, () => this.scene.start('GameScene'));
+      this.time.delayedCall(400, () => this.scene.start('MapScene'));
     });
 
     this._buildButton(W / 2, H * 0.74, '?  CONTROLES', 0x39d0ff, 0x2a9aCC, () => {
@@ -571,7 +572,8 @@ class WinScene extends Phaser.Scene {
   constructor() { super({ key: 'WinScene' }); }
 
   init(data) {
-    this.finalScore = data.score || 0;
+    this.finalScore = data.score   || 0;
+    this.levelId    = data.levelId || 'level_1';
   }
 
   create() {
@@ -611,41 +613,77 @@ class WinScene extends Phaser.Scene {
 
     this.tweens.add({ targets: winText, scaleX: 1, scaleY: 1, alpha: 1, duration: 700, ease: 'Back.easeOut' });
 
+    // ── Guardar progreso ──────────────────────────────────────
+    const earnedStars = this.finalScore >= 700 ? 3 : this.finalScore >= 300 ? 2 : 1;
+    this._saveProgress(this.levelId, earnedStars);
+
     this.time.delayedCall(600, () => {
-      this.add.text(W / 2, H * 0.5, 'PUNTUACIÓN', {
+      this.add.text(W / 2, H * 0.46, 'PUNTUACIÓN', {
         fontFamily: "'Press Start 2P'",
         fontSize:   '10px',
         color:      '#aaaaaa'
       }).setOrigin(0.5);
 
-      this.add.text(W / 2, H * 0.58, String(this.finalScore).padStart(6, '0'), {
+      this.add.text(W / 2, H * 0.54, String(this.finalScore).padStart(6, '0'), {
         fontFamily: "'Press Start 2P'",
-        fontSize:   '32px',
+        fontSize:   '28px',
         color:      '#f7c948',
         stroke:     '#c8820a',
         strokeThickness: 4
       }).setOrigin(0.5);
 
-      this._buildBtn(W / 2, H * 0.73, '⟲  JUGAR DE NUEVO', 0x3ddc84, () => {
+      // Estrellas ganadas
+      const starStr = '★'.repeat(earnedStars) + '☆'.repeat(3 - earnedStars);
+      const starText = this.add.text(W / 2, H * 0.63, starStr, {
+        fontSize: '28px',
+        color:    '#f7c948'
+      }).setOrigin(0.5).setScale(0);
+      this.tweens.add({ targets: starText, scaleX: 1, scaleY: 1, duration: 500, ease: 'Back.easeOut' });
+
+      this._buildBtn(W / 2, H * 0.75, '▶  MAPA', 0x3ddc84, () => {
         this.cameras.main.fade(300, 0, 0, 0);
         this.time.delayedCall(300, () => {
           this.scene.stop('HUDScene');
           this.scene.stop();
-          this.scene.start('GameScene');
-          this.scene.start('HUDScene');
+          this.scene.start('MapScene');
         });
       });
-      this._buildBtn(W / 2, H * 0.86, '⌂  MENÚ', 0x39d0ff, () => {
+      this._buildBtn(W / 2, H * 0.88, '⟲  REINTENTAR', 0x39d0ff, () => {
         this.cameras.main.fade(300, 0, 0, 0);
         this.time.delayedCall(300, () => {
           this.scene.stop('HUDScene');
           this.scene.stop();
-          this.scene.start('MenuScene');
+          this.scene.start('GameScene', { levelId: this.levelId });
+          this.scene.start('HUDScene');
         });
       });
     });
 
     this.cameras.main.fadeIn(600, 0, 0, 0);
+  }
+
+  _saveProgress(levelId, stars) {
+    try {
+      const ALL_IDS = ['level_1', 'level_2', 'level_3', 'level_4', 'level_5'];
+      const raw      = localStorage.getItem('jumpquest_progress');
+      const progress = raw ? JSON.parse(raw) : {};
+
+      // Mejorar estrellas si se hizo mejor puntuación
+      if (!progress[levelId] || progress[levelId].stars < stars) {
+        progress[levelId] = { unlocked: true, stars };
+      }
+
+      // Desbloquear el siguiente nivel
+      const idx  = ALL_IDS.indexOf(levelId);
+      const next = ALL_IDS[idx + 1];
+      if (next && !progress[next]) {
+        progress[next] = { unlocked: true, stars: 0 };
+      }
+
+      localStorage.setItem('jumpquest_progress', JSON.stringify(progress));
+    } catch (e) {
+      // localStorage no disponible (modo privado, etc.)
+    }
   }
 
   _buildBtn(x, y, label, color, cb) {
@@ -727,13 +765,20 @@ class GameScene extends Phaser.Scene {
       this.player.gameObject,
       this.level.enemies,
       (playerSprite, enemy) => {
-        const playerFeet = playerSprite.body.bottom;
-        const enemyTop   = enemy.body.top;
+        // Ignorar si el jugador está en invencibilidad
+        if (this.player.isInvincible) return;
 
-        // Si el jugador cae sobre el enemigo → lo derrota
-        if (playerFeet < enemyTop + 12 && playerSprite.body.velocity.y > 0) {
+        const vy = playerSprite.body.velocity.y;
+        const vx = Math.abs(playerSprite.body.velocity.x);
+
+        // Stompeado: la velocidad vertical domina la horizontal.
+        // Este criterio es independiente de posición y funciona a
+        // cualquier velocidad de caída o framerate.
+        //   vy > 80     → mínimo impulso hacia abajo (evita rozar de pie)
+        //   vy > vx*0.6 → componente vertical claramente mayor que la horizontal
+        if (vy > 80 && vy > vx * 0.6) {
           this._killEnemy(enemy);
-          playerSprite.body.setVelocityY(-300); // rebote
+          playerSprite.body.setVelocityY(-320); // rebote
         } else {
           // Golpe lateral
           this.player.loseLife();
@@ -908,6 +953,7 @@ const config = {
   scene: [
     BootScene,
     MenuScene,
+    MapScene,
     HUDScene,
     PauseScene,
     GameScene,

@@ -47,6 +47,11 @@ export default class Level {
         this.data.movingPlatforms.forEach(p => {
             pm.createMoving(p.x, p.y, p.width, p.config);
         });
+
+        // Rellena visualmente el hueco entre el suelo y el límite inferior
+        // del mundo. Se detecta automáticamente la plataforma más ancha (suelo).
+        const groundPlatform = this.data.platforms.reduce((a, b) => a.width > b.width ? a : b);
+        pm.fillGroundBottom(groundPlatform.y);
     }
 
     // ─────────────────────────────
@@ -134,25 +139,75 @@ export default class Level {
         });
 
         this.data.enemies.forEach(e => {
-            const slime = this.enemies.create(e.x, e.y, 'enemy_slime').setDepth(7);
-            slime.setVelocityX(e.speed);
-            slime.setCollideWorldBounds(true);
-            slime.setBounceX(1);
-
-            // Squish idle animado
-            scene.tweens.add({
-                targets:  slime,
-                scaleY:   0.85,
-                scaleX:   1.1,
-                duration: 400,
-                yoyo:     true,
-                repeat:   -1,
-                ease:     'Sine.easeInOut',
-                delay:    Phaser.Math.Between(0, 400)
-            });
+            if (e.type === 'bat') {
+                this._createBat(e);
+            } else {
+                this._createSlime(e);
+            }
         });
 
         this.platformManager.addEnemyColliders(this.enemies);
+    }
+
+    _createSlime(e) {
+        const scene = this.scene;
+        const slime = this.enemies.create(e.x, e.y, 'enemy_slime').setDepth(7);
+        slime.setVelocityX(e.speed);
+        slime.setCollideWorldBounds(true);
+        slime.setBounceX(1);
+
+        // Hitbox ajustada: textura 32×28 → body 22×16 sobre la elipse principal
+        slime.body.setSize(22, 16);
+        slime.body.setOffset(5, 8);
+
+        // Gravedad propia (la global del mundo es 0)
+        slime.body.setGravityY(700);
+
+        slime.isBat = false;
+
+        scene.tweens.add({
+            targets:  slime,
+            scaleY:   0.85,
+            scaleX:   1.1,
+            duration: 400,
+            yoyo:     true,
+            repeat:   -1,
+            ease:     'Sine.easeInOut',
+            delay:    Phaser.Math.Between(0, 400)
+        });
+    }
+
+    _createBat(e) {
+        const scene = this.scene;
+        const bat = this.enemies.create(e.x, e.y, 'enemy_bat').setDepth(7);
+        bat.setVelocityX(e.speed);
+        bat.setCollideWorldBounds(true);
+        bat.setBounceX(1);
+
+        // Hitbox compacta centrada en el cuerpo del murciélago (textura 28×18)
+        bat.body.setSize(18, 10);
+        bat.body.setOffset(5, 4);
+
+        // Sin gravedad: flota
+        bat.body.setAllowGravity(false);
+
+        bat.isBat          = true;
+        bat.floatOriginY   = e.y;
+        bat.floatPhase     = Phaser.Math.FloatBetween(0, Math.PI * 2);
+        bat.floatSpeed     = e.floatSpeed    || 2.5;
+        bat.floatAmplitude = e.floatAmplitude || 38;
+
+        // Aleteo animado
+        scene.tweens.add({
+            targets:  bat,
+            scaleY:   0.65,
+            scaleX:   1.2,
+            duration: 180,
+            yoyo:     true,
+            repeat:   -1,
+            ease:     'Sine.easeInOut',
+            delay:    Phaser.Math.Between(0, 180)
+        });
     }
 
     // ─────────────────────────────
@@ -200,13 +255,24 @@ export default class Level {
     // ─────────────────────────────
     // UPDATE
     // ─────────────────────────────
-    update() {
+    update(time) {
         this.enemies.getChildren().forEach(enemy => {
+            if (enemy.isBat) {
+                // Flotación sinusoidal en Y
+                const targetY = enemy.floatOriginY +
+                    Math.sin(time * 0.001 * enemy.floatSpeed + enemy.floatPhase) * enemy.floatAmplitude;
+                // Mover hacia el objetivo vía velocidad (no altera la velocidad X)
+                enemy.body.setVelocityY((targetY - enemy.y) * 10);
+            }
+
+            // Rebote horizontal (sirve tanto para slimes como murciélagos)
             if (enemy.body.blocked.left) {
                 enemy.setVelocityX(Math.abs(enemy.body.velocity.x));
+                enemy.setFlipX(false);
             }
             if (enemy.body.blocked.right) {
                 enemy.setVelocityX(-Math.abs(enemy.body.velocity.x));
+                enemy.setFlipX(true);
             }
         });
     }

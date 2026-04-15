@@ -223,5 +223,28 @@ class PlatformManager {
     this.scene.physics.add.collider(enemyGroup, this.staticGroup);
     this.scene.physics.add.collider(enemyGroup, this.movingGroup);
   }
+
+  /**
+   * Rellena visualmente con tiles de piedra desde groundY+1 tile
+   * hasta el límite inferior del mundo, eliminando el hueco vacío.
+   * Los tiles se añaden al staticGroup → hereda todos los colisionadores.
+   * @param {number} groundY – Y del tile de suelo superior (centro del tile)
+   */
+  fillGroundBottom(groundY) {
+    const bounds = this.scene.physics.world.bounds;
+    const tileW  = 32;
+    const tileH  = 16;
+    const cols   = Math.ceil(bounds.width / tileW);
+
+    // Primera fila debajo del suelo principal hasta un tile más allá del mundo
+    for (let row = 1; groundY + row * tileH <= bounds.height + tileH; row++) {
+      const y = groundY + row * tileH;
+      for (let col = 0; col < cols; col++) {
+        const tile = this.staticGroup.create(col * tileW + tileW / 2, y, 'platform_stone');
+        tile.refreshBody();
+        tile.setDepth(5);
+      }
+    }
+  }
 }
 export default PlatformManager;
