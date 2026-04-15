@@ -136,37 +136,38 @@ export default {
 
     enemies: [
         // ── Slimes (suelo y plataformas) ─────────────────────
+        // Y = platform.y - 22  (body bottom se alinea con la superficie)
         // Sección 1
-        { x: 200,  y: 736, speed:  60 },
-        { x: 500,  y: 424, speed:  50 },
-        { x: 900,  y: 744, speed:  70 },
+        { x: 200,  y: 730, speed:  60 },   // suelo y=752
+        { x: 500,  y: 730, speed:  50 },   // sin plataforma en x=500 → cae al suelo
+        { x: 900,  y: 730, speed:  70 },   // suelo y=752
 
         // Sección 2
-        { x: 1100, y: 624, speed:  55 },
-        { x: 1500, y: 464, speed:  65 },
+        { x: 1100, y: 618, speed:  55 },   // plataforma y=640
+        { x: 1500, y: 458, speed:  65 },   // plataforma y=480
 
         // Sección 3–4
-        { x: 2000, y: 736, speed:  80 },
-        { x: 2500, y: 604, speed:  60 },
-        { x: 2700, y: 444, speed:  75 },
-        { x: 3000, y: 736, speed:  90 },
+        { x: 2000, y: 730, speed:  80 },   // suelo y=752
+        { x: 2500, y: 598, speed:  60 },   // plataforma y=620
+        { x: 2700, y: 518, speed:  75 },   // plataforma y=540
+        { x: 3000, y: 730, speed:  90 },   // suelo y=752
 
         // Sección 5 — puente roto
-        { x: 3350, y: 664, speed:  85 },
-        { x: 3580, y: 504, speed:  90 },
-        { x: 3960, y: 484, speed:  80 },
+        { x: 3350, y: 658, speed:  85 },   // plataforma y=680
+        { x: 3580, y: 498, speed:  90 },   // plataforma y=520
+        { x: 3960, y: 478, speed:  80 },   // plataforma y=500
 
         // Sección 6 — torre
-        { x: 4060, y: 736, speed: 100 },
-        { x: 4210, y: 564, speed:  90 },
-        { x: 4290, y: 364, speed:  95 },
-        { x: 4610, y: 364, speed:  85 },
+        { x: 4060, y: 730, speed: 100 },   // suelo y=752
+        { x: 4210, y: 558, speed:  90 },   // plataforma y=580
+        { x: 4290, y: 358, speed:  95 },   // plataforma y=380
+        { x: 4610, y: 358, speed:  85 },   // plataforma y=380
 
         // Sección 7 — tramo final
-        { x: 4760, y: 736, speed: 110 },
-        { x: 4990, y: 544, speed: 100 },
-        { x: 5160, y: 444, speed: 115 },
-        { x: 5340, y: 364, speed: 105 },
+        { x: 4760, y: 730, speed: 110 },   // suelo y=752
+        { x: 4990, y: 538, speed: 100 },   // plataforma y=560
+        { x: 5160, y: 438, speed: 115 },   // plataforma y=460
+        { x: 5340, y: 358, speed: 105 },   // plataforma y=380
 
         // ── Murciélagos flotantes ─────────────────────────────
         // Sección 1-2: introducción suave, amplitud pequeña

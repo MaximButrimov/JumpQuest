@@ -156,9 +156,9 @@ export default class Level {
         slime.setCollideWorldBounds(true);
         slime.setBounceX(1);
 
-        // Hitbox ajustada: textura 32×28 → body 22×16 sobre la elipse principal
+        // Hitbox ajustada: textura 32×28 → body 22×16 alineado con el pie visual
         slime.body.setSize(22, 16);
-        slime.body.setOffset(5, 8);
+        slime.body.setOffset(5, 12);
 
         // Gravedad propia (la global del mundo es 0)
         slime.body.setGravityY(700);

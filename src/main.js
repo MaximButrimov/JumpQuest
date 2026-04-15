@@ -347,31 +347,28 @@ class HUDScene extends Phaser.Scene {
       color:      '#f7c948'
     });
 
-    // ── Nivel ───────────────────────────────────────────
-    this.add.text(W - 100, 14, 'NIVEL', {
-      fontFamily: "'Press Start 2P'",
-      fontSize:   '9px',
-      color:      '#aaaaaa'
-    });
-    this.add.text(W - 100, 27, '1-1', {
-      fontFamily: "'Press Start 2P'",
-      fontSize:   '13px',
-      color:      '#39d0ff'
-    });
-
-    // ── ESC – Pausa ──────────────────────────────────────
-    this.add.text(W - 14, 14, 'ESC', {
+    // ── Puntuación (top-right) ───────────────────────────
+    this.add.text(W - 16, 10, 'PTS', {
       fontFamily: "'Press Start 2P'",
       fontSize:   '7px',
-      color:      '#555577'
+      color:      '#aaaaaa'
+    }).setOrigin(1, 0);
+    this.topRightScoreText = this.add.text(W - 16, 22, '000000', {
+      fontFamily: "'Press Start 2P'",
+      fontSize:   '13px',
+      color:      '#f7c948',
+      stroke:     '#7b5e00',
+      strokeThickness: 2
     }).setOrigin(1, 0);
 
     // ── Escuchar eventos de GameScene ───────────────────
     this.coinsCollected = 0;
 
     this.scene.get('GameScene').events.on('scoreChanged', (score) => {
-      this.scoreText.setText(String(score).padStart(6, '0'));
-      this.tweens.add({ targets: this.scoreText, scaleX: 1.2, scaleY: 1.2, duration: 80, yoyo: true });
+      const str = String(score).padStart(6, '0');
+      this.scoreText.setText(str);
+      this.topRightScoreText.setText(str);
+      this.tweens.add({ targets: [this.scoreText, this.topRightScoreText], scaleX: 1.2, scaleY: 1.2, duration: 80, yoyo: true });
     });
 
     this.scene.get('GameScene').events.on('livesChanged', (lives) => {
