@@ -903,7 +903,7 @@ class GameScene extends Phaser.Scene {
     panel.fillRoundedRect(W / 2 - 180, H / 2 - 40, 360, 80, 10);
     panel.setScrollFactor(0);
 
-    const txt = this.add.text(W / 2, H / 2, 'NIVEL 1-1\n¡Encuentra el portal!', {
+    const txt = this.add.text(W / 2, H / 2, 'NIVEL ' + this._levelName + '\n¡Encuentra el portal!', {
       fontFamily: "'Press Start 2P'",
       fontSize:   '13px',
       color:      '#f7c948',

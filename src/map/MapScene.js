@@ -8,6 +8,7 @@
 // ══════════════════════════════════════════════════════════════
 
 import Level1Data from '../levels/Level1.js';
+import Level2Data from '../levels/Level2.js';
 
 // ── Definición de niveles ────────────────────────────────────
 //  id        : clave única para localStorage
@@ -19,7 +20,7 @@ import Level1Data from '../levels/Level1.js';
 
 const LEVEL_DEFS = [
   { id: 'level_1', name: '1-1', label: 'Bosque\nInicial',  x: 120, y: 330, levelData: Level1Data, isBoss: false },
-  { id: 'level_2', name: '1-2', label: 'Cuevas\nOscuras',  x: 265, y: 205, levelData: null,       isBoss: false },
+  { id: 'level_2', name: '1-2', label: 'Cuevas\nOscuras',  x: 265, y: 205, levelData: Level2Data, isBoss: false },
   { id: 'level_3', name: '1-3', label: 'Puentes\nRotos',   x: 415, y: 305, levelData: null,       isBoss: false },
   { id: 'level_4', name: '1-4', label: 'Torres\nHeladas',  x: 570, y: 190, levelData: null,       isBoss: false },
   { id: 'level_5', name: '1-5', label: '¡JEFE!',           x: 700, y: 310, levelData: null,       isBoss: true  },

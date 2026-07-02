@@ -3,6 +3,23 @@ export default {
     // IMPORTANTE: actualizar WORLD_W en GameScene.create() a 5600
     worldWidth: 5600,
 
+    // ── Decoraciones (bosque) ─────────────────────────────
+    decorations: [
+        { texture: 'bush',  x: 80   },
+        { texture: 'bush',  x: 280  },
+        { texture: 'bush',  x: 560  },
+        { texture: 'bush',  x: 860  },
+        { texture: 'bush',  x: 1100 },
+        { texture: 'bush',  x: 1500 },
+        { texture: 'bush',  x: 1900 },
+        { texture: 'bush',  x: 2500 },
+        { texture: 'bush',  x: 2900 },
+        { texture: 'totem', x: 200  },
+        { texture: 'totem', x: 900  },
+        { texture: 'totem', x: 1700 },
+        { texture: 'totem', x: 2700 },
+    ],
+
     platforms: [
         // ── Suelo principal (extendido a 5600) ───────────
         { x: 0,    y: 752, width: 5600, texture: 'grass' },

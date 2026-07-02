@@ -21,11 +21,14 @@ Un juego de plataformas 2D estilo retro arcade construido con **Phaser 3** y Jav
 - ✅ Salto variable (corto / largo según cuánto mantienes)
 - ✅ Coyote Time + Jump Buffer para control preciso
 - ✅ Plataformas estáticas (`grass` / `stone`) y móviles (horizontal / vertical)
-- ✅ Enemigos con IA básica (patrulla, rebota en paredes)
+- ✅ Enemigos con IA básica: **slimes** 🟢 (patrullan y rebotan) y **murciélagos** 🦇 (flotan con movimiento sinusoidal)
 - ✅ Matar enemigos saltando sobre ellos
 - ✅ Monedas 🪙 (100 pts) y Estrellas ⭐ (500 pts)
 - ✅ Portal de salida al final del nivel
 - ✅ Sistema de vidas (3) + invencibilidad tras golpe
+- ✅ **Mapa de selección de niveles** interactivo con camino, nodos y candados
+- ✅ **Progreso persistente** (localStorage): niveles desbloqueados y estrellas por nivel
+- ✅ **Calificación de 1–3 estrellas** por nivel según la puntuación final
 - ✅ Cámara con follow suave y deadzone
 - ✅ Partículas: polvo al saltar/aterrizar, destellos al recoger ítems
 - ✅ HUD: puntuación, vidas, monedas, número de nivel
@@ -46,16 +49,19 @@ JumpQuest/
 ├── index.html                  # Punto de entrada
 ├── style.css                   # Estilos globales + efecto CRT scanlines
 └── src/
-    ├── main.js                 # Config de Phaser + todas las escenas
+    ├── main.js                 # Config de Phaser + escenas (Boot, Menu, HUD, Pause, Game, GameOver, Win)
     ├── core/
     │   ├── Player.js           # Lógica del jugador (movimiento, vidas, física)
     │   └── Platform.js         # Plataformas estáticas y móviles
+    ├── map/
+    │   └── MapScene.js         # Mapa de selección de niveles + progreso (localStorage)
     ├── levels/
-    │   ├── Level.js            # Constructor del nivel (plataformas, enemigos, ítems)
-    │   └── Level1.js           # Datos del nivel 1 (5600 px de ancho, 7 secciones)
+    │   ├── Level.js            # Constructor del nivel (plataformas, enemigos, ítems, slimes y murciélagos)
+    │   ├── Level1.js           # Datos del nivel 1-1 "Bosque Inicial" (5600 px, 7 secciones, slimes)
+    │   └── Level2.js           # Datos del nivel "Cuevas Oscuras" (5600 px, slimes + murciélagos)
     └── systems/
         ├── BackgroundSystem.js # Fondo parallax (cielo, estrellas, montañas, nubes)
-        └── TextureSystem.js    # Texturas procedurales (moneda, enemigo, portal, estrella, decoraciones)
+        └── TextureSystem.js    # Texturas procedurales (moneda, slime, murciélago, portal, estrella, decoraciones)
 ```
 
 ---
@@ -66,11 +72,14 @@ JumpQuest/
 |---|---|
 | `BootScene` | Precarga y síntesis de sonidos con Web Audio API |
 | `MenuScene` | Menú principal animado con botones y mini personaje |
-| `GameScene` | Gameplay principal |
+| `MapScene` | Mapa de selección de niveles con progreso persistente |
+| `GameScene` | Gameplay principal (recibe `levelData`, `levelName`, `levelId`) |
 | `HUDScene` | UI superpuesta en paralelo (puntuación, vidas, monedas) |
 | `PauseScene` | Pantalla de pausa (lanzada sobre GameScene) |
 | `GameOverScene` | Game over con puntuación final y partículas |
-| `WinScene` | Victoria con lluvia de estrellas y puntuación |
+| `WinScene` | Victoria con lluvia de estrellas, estrellas ganadas y guardado de progreso |
+
+**Flujo de escenas:** `Menú → Mapa → Juego → Victoria → Mapa` (o `Game Over → reintentar`).
 
 ---
 
@@ -100,13 +109,57 @@ Luego abre `http://localhost:8080` en tu navegador.
 ### Gráficos
 Todos los assets son **generados proceduralmente** con la API `Graphics` de Phaser 3 — no hay archivos de imagen externos. Las texturas se crean una sola vez con `generateTexture()` y se reutilizan desde la caché de Phaser.
 
-Assets generados: `platform_tile`, `platform_stone`, `platform_moving`, `player_tex`, `coin`, `enemy_slime`, `portal`, `powerstar`, `bush`, `totem`, `glow_px`, `particle_px`, `bg_sky`, `mountain_bg`, `cloud_spr`, `star_px`.
+Assets generados: `platform_tile`, `platform_stone`, `platform_moving`, `player_tex`, `coin`, `enemy_slime`, `enemy_bat`, `portal`, `powerstar`, `bush`, `totem`, `stalactite`, `stalagmite`, `cave_crystal`, `glow_px`, `particle_px`, `bg_sky`, `mountain_bg`, `cloud_spr`, `star_px`.
 
 ### Física
 - Motor **Arcade Physics** de Phaser 3
 - Gravedad variable: más fuerte al caer (`GRAVITY_DOWN = 1600`), más suave al subir (`GRAVITY_UP = 900`)
 - Hitboxes ajustadas independientemente del sprite visual
 - Plataformas móviles actualizadas vía `body.reset()` cada frame
+
+### Enemigos
+- **Slime** 🟢 — patrulla horizontalmente sobre plataformas, rebota al chocar con paredes y tiene su propia gravedad.
+- **Murciélago** 🦇 — enemigo de cueva; flota sin gravedad describiendo un movimiento sinusoidal en Y (`floatAmplitude` / `floatSpeed`) mientras patrulla en X.
+- Ambos se eliminan saltándoles encima (+200 pts): el criterio de "stomp" compara la velocidad vertical contra la horizontal, por lo que es independiente de la posición y del framerate.
+
+### Decoraciones (por nivel)
+Las decoraciones son **data-driven**: cada nivel declara las suyas en `data.decorations` y `Level.js` las dibuja de forma genérica, sin lógica específica por tema. Cada entrada es un descriptor:
+
+```js
+decorations: [
+  { texture: 'bush', x: 80 },                              // sobre el suelo (default)
+  { texture: 'stalactite', x: 160, y: 0, originY: 0, scale: 1.1 }, // colgando del techo
+]
+```
+
+| Campo | Default | Descripción |
+|---|---|---|
+| `texture` | — | Clave de la textura (obligatorio) |
+| `x` | — | Posición horizontal en el mundo (obligatorio) |
+| `y` | `752` (suelo) | Posición vertical |
+| `originX` / `originY` | `0.5` / `1` | Origen del sprite (por defecto se apoya en el suelo) |
+| `depth` | `4` | Profundidad de render |
+| `flipX`, `scale`, `alpha`, `tint` | — | Modificadores opcionales |
+
+Así, `Level1.js` usa `bush` / `totem` (bosque) y `Level2.js` usa `stalactite` / `stalagmite` / `cave_crystal` (cueva) sin tocar el código del motor. Para un tema nuevo, basta con generar la textura en `TextureSystem.js` y referenciarla en el `decorations` del nivel.
+
+### Mapa y Progreso
+La `MapScene` es un mapa del mundo con nodos de nivel conectados por un camino. Cada nodo puede estar **bloqueado** (🔒), **disponible** o **completado** (con 1–3 estrellas), y el nivel jefe se marca con 👑.
+
+El progreso se guarda en `localStorage` bajo la clave `jumpquest_progress`:
+
+```json
+{
+  "level_1": { "unlocked": true, "stars": 3 },
+  "level_2": { "unlocked": true, "stars": 0 }
+}
+```
+
+- Completar un nivel **desbloquea el siguiente** y guarda las estrellas ganadas (solo se sube el récord, nunca baja).
+- Las **estrellas** se otorgan según la puntuación final: `≥700 → ★★★`, `≥300 → ★★☆`, resto `★☆☆`.
+- El nivel `level_1` siempre está desbloqueado por defecto.
+
+> ℹ️ Los niveles `1-1` (Bosque Inicial) y `1-2` (Cuevas Oscuras) son jugables. Los nodos `1-3` … `1-5` del mapa aún apuntan a `levelData: null` y muestran un aviso de **"Próximamente"** hasta que se creen y enlacen sus datos en `LEVEL_DEFS` dentro de `MapScene.js`.
 
 ### Nivel 1
 El nivel tiene **5600 px de ancho** y está dividido en 7 secciones de dificultad creciente:
@@ -158,7 +211,12 @@ this.COYOTE_TIME   = 100;   // ms de gracia tras salir del borde
 this.JUMP_BUFFER   = 120;   // ms de buffer de salto anticipado
 ```
 
-Para añadir nuevos niveles, crea un archivo en `src/levels/` siguiendo la estructura de `Level1.js` (con `platforms`, `movingPlatforms`, `coins`, `stars`, `enemies` y `exit`) y pásalo como `levelData` al iniciar `GameScene`.
+Para añadir nuevos niveles:
+
+1. Crea un archivo en `src/levels/` siguiendo la estructura de `Level1.js` / `Level2.js` (con `worldWidth`, `platforms`, `movingPlatforms`, `coins`, `stars`, `enemies` y `exit`). Para añadir un murciélago, marca el enemigo con `type: 'bat'` y opcionalmente `floatAmplitude` / `floatSpeed`.
+2. Impórtalo en `src/map/MapScene.js` y enlázalo en la entrada correspondiente de `LEVEL_DEFS` (`levelData: TuNivelData`). Al hacer clic en su nodo, `MapScene` inicia `GameScene` pasándole `{ levelData, levelName, levelId }`.
+
+El `levelId` (ej. `level_2`) es la clave usada para guardar su progreso y estrellas en `localStorage`.
 
 ---
 

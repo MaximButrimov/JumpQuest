@@ -2,6 +2,45 @@ export default {
     // ── Dimensiones del mundo ─────────────────────────────
     worldWidth: 5600,
 
+    // ── Decoraciones (cueva) ──────────────────────────────
+    decorations: [
+        // Estalactitas colgando del techo (y: 0, originY: 0)
+        { texture: 'stalactite', x: 160,  y: 0, originY: 0, scale: 1.1 },
+        { texture: 'stalactite', x: 430,  y: 0, originY: 0, scale: 0.8 },
+        { texture: 'stalactite', x: 720,  y: 0, originY: 0, scale: 1.3 },
+        { texture: 'stalactite', x: 1040, y: 0, originY: 0, scale: 0.9 },
+        { texture: 'stalactite', x: 1380, y: 0, originY: 0, scale: 1.2 },
+        { texture: 'stalactite', x: 1720, y: 0, originY: 0, scale: 0.85 },
+        { texture: 'stalactite', x: 2080, y: 0, originY: 0, scale: 1.15 },
+        { texture: 'stalactite', x: 2480, y: 0, originY: 0, scale: 1.0  },
+        { texture: 'stalactite', x: 2880, y: 0, originY: 0, scale: 1.3  },
+        { texture: 'stalactite', x: 3280, y: 0, originY: 0, scale: 0.9  },
+        { texture: 'stalactite', x: 3680, y: 0, originY: 0, scale: 1.1  },
+        { texture: 'stalactite', x: 4080, y: 0, originY: 0, scale: 1.25 },
+        { texture: 'stalactite', x: 4480, y: 0, originY: 0, scale: 0.9  },
+        { texture: 'stalactite', x: 4900, y: 0, originY: 0, scale: 1.2  },
+        { texture: 'stalactite', x: 5320, y: 0, originY: 0, scale: 1.0  },
+
+        // Estalagmitas sobre el suelo (y por defecto = 752)
+        { texture: 'stalagmite', x: 350  },
+        { texture: 'stalagmite', x: 900,  scale: 1.2 },
+        { texture: 'stalagmite', x: 1600 },
+        { texture: 'stalagmite', x: 2300, scale: 1.3 },
+        { texture: 'stalagmite', x: 3100 },
+        { texture: 'stalagmite', x: 3900, scale: 1.2 },
+        { texture: 'stalagmite', x: 4700 },
+        { texture: 'stalagmite', x: 5250, scale: 1.1 },
+
+        // Cristales brillantes decorando el suelo
+        { texture: 'cave_crystal', x: 600  },
+        { texture: 'cave_crystal', x: 1250, flipX: true },
+        { texture: 'cave_crystal', x: 2000 },
+        { texture: 'cave_crystal', x: 2750, flipX: true },
+        { texture: 'cave_crystal', x: 3500 },
+        { texture: 'cave_crystal', x: 4300, flipX: true },
+        { texture: 'cave_crystal', x: 5100 },
+    ],
+
     platforms: [
         // ── Suelo principal (piedra de cueva) ────────────
         { x: 0,    y: 752, width: 5600, texture: 'stone' },

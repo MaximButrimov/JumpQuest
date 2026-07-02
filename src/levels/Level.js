@@ -55,23 +55,27 @@ export default class Level {
     }
 
     // ─────────────────────────────
-    // DECORACIONES
+    // DECORACIONES (data-driven)
     // ─────────────────────────────
+    // Cada nivel declara sus propias decoraciones en data.decorations como
+    // una lista de descriptores. Defaults pensados para adornos sobre el suelo:
+    //   { texture, x, y=GROUND_Y, originX=0.5, originY=1, depth=4,
+    //     flipX?, scale?, alpha?, tint? }
+    // Para adornos colgados del techo usa y: 0, originY: 0 (ej. estalactitas).
     _buildDecorations() {
-        const scene = this.scene;
-        const W     = scene.physics.world.bounds.width;
-        const groundY = 752;
+        const scene   = this.scene;
+        const GROUND_Y = 752;
 
-        // Arbustos sobre el suelo
-        const bushX = [80, 280, 560, 860, 1100, 1500, 1900, 2500, 2900];
-        for (const bx of bushX) {
-            scene.add.image(bx, groundY, 'bush').setOrigin(0.5, 1).setDepth(4);
-        }
+        const decorations = this.data.decorations || [];
+        for (const d of decorations) {
+            const img = scene.add.image(d.x, d.y ?? GROUND_Y, d.texture)
+                .setOrigin(d.originX ?? 0.5, d.originY ?? 1)
+                .setDepth(d.depth ?? 4);
 
-        // Totems decorativos
-        const totemX = [200, 900, 1700, 2700];
-        for (const tx of totemX) {
-            scene.add.image(tx, groundY, 'totem').setOrigin(0.5, 1).setDepth(4);
+            if (d.flipX)          img.setFlipX(true);
+            if (d.scale != null)  img.setScale(d.scale);
+            if (d.alpha != null)  img.setAlpha(d.alpha);
+            if (d.tint != null)   img.setTint(d.tint);
         }
     }
 
