@@ -2,6 +2,9 @@ export default {
     // ── Dimensiones del mundo ─────────────────────────────
     worldWidth: 5600,
 
+    // ── Tema visual (fondo) ───────────────────────────────
+    theme: 'cave',
+
     // ── Decoraciones (cueva) ──────────────────────────────
     decorations: [
         // Estalactitas colgando del techo (y: 0, originY: 0)

@@ -3,6 +3,9 @@ export default {
     // IMPORTANTE: actualizar WORLD_W en GameScene.create() a 5600
     worldWidth: 5600,
 
+    // ── Tema visual (fondo) ───────────────────────────────
+    theme: 'forest',
+
     // ── Decoraciones (bosque) ─────────────────────────────
     decorations: [
         { texture: 'bush',  x: 80   },

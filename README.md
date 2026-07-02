@@ -18,6 +18,7 @@ Un juego de plataformas 2D estilo retro arcade construido con **Phaser 3** y Jav
 ## 🧩 Características
 
 - ✅ Movimiento con aceleración y fricción realistas
+- ✅ **Personaje animado**: frames de idle, caminar (2 fotogramas), salto y caída generados por código
 - ✅ Salto variable (corto / largo según cuánto mantienes)
 - ✅ Coyote Time + Jump Buffer para control preciso
 - ✅ Plataformas estáticas (`grass` / `stone`) y móviles (horizontal / vertical)
@@ -36,7 +37,7 @@ Un juego de plataformas 2D estilo retro arcade construido con **Phaser 3** y Jav
 - ✅ Pantalla de controles desde el menú
 - ✅ Pantalla de pausa (ESC)
 - ✅ Game Over y pantalla de victoria con puntuación final
-- ✅ Fondo parallax multicapa (cielo → estrellas → montañas → nubes)
+- ✅ **Fondos temáticos por nivel** con parallax: bosque diurno (sol, colinas, nubes, hojas) vs. cueva subterránea (muro rocoso, cristales, viñeta, motas de polvo)
 - ✅ Sonidos sintetizados con Web Audio API (sin archivos externos)
 - ✅ Estética pixel art retro con efecto CRT scanlines
 
@@ -60,7 +61,7 @@ JumpQuest/
     │   ├── Level1.js           # Datos del nivel 1-1 "Bosque Inicial" (5600 px, 7 secciones, slimes)
     │   └── Level2.js           # Datos del nivel "Cuevas Oscuras" (5600 px, slimes + murciélagos)
     └── systems/
-        ├── BackgroundSystem.js # Fondo parallax (cielo, estrellas, montañas, nubes)
+        ├── BackgroundSystem.js # Fondos parallax por tema ('forest' / 'cave')
         └── TextureSystem.js    # Texturas procedurales (moneda, slime, murciélago, portal, estrella, decoraciones)
 ```
 
@@ -109,13 +110,32 @@ Luego abre `http://localhost:8080` en tu navegador.
 ### Gráficos
 Todos los assets son **generados proceduralmente** con la API `Graphics` de Phaser 3 — no hay archivos de imagen externos. Las texturas se crean una sola vez con `generateTexture()` y se reutilizan desde la caché de Phaser.
 
-Assets generados: `platform_tile`, `platform_stone`, `platform_moving`, `player_tex`, `coin`, `enemy_slime`, `enemy_bat`, `portal`, `powerstar`, `bush`, `totem`, `stalactite`, `stalagmite`, `cave_crystal`, `glow_px`, `particle_px`, `bg_sky`, `mountain_bg`, `cloud_spr`, `star_px`.
+Assets generados: `platform_tile`, `platform_stone`, `platform_moving`, `player_idle` / `player_walk_a` / `player_walk_b` / `player_jump` / `player_fall`, `coin`, `enemy_slime`, `enemy_bat`, `portal`, `powerstar`, `bush`, `totem`, `stalactite`, `stalagmite`, `cave_crystal`, `glow_px`, `particle_px`, y las texturas de fondo por tema (`bg_sky_forest`, `sun_forest`, `hills_far`, `hills_near`, `cloud_forest`, `leaf_px`, `bg_sky_cave`, `cave_wall`, `bg_crystal`, `mote_px`, `cave_vignette`).
 
 ### Física
 - Motor **Arcade Physics** de Phaser 3
 - Gravedad variable: más fuerte al caer (`GRAVITY_DOWN = 1600`), más suave al subir (`GRAVITY_UP = 900`)
 - Hitboxes ajustadas independientemente del sprite visual
 - Plataformas móviles actualizadas vía `body.reset()` cada frame
+
+### Personaje
+El jugador se dibuja por código como **5 frames de 24×30 px** (`player_idle`, `player_walk_a`, `player_walk_b`, `player_jump`, `player_fall`) que comparten cabeza y torso y varían brazos y piernas por pose. `Player._animateSprite()` elige el frame cada tick según el estado:
+
+- En el aire → `jump` (subiendo) o `fall` (cayendo).
+- En el suelo moviéndose → alterna `walk_a` / `walk_b` con una cadencia proporcional a la velocidad.
+- Quieto → `idle`.
+
+Encima se aplican tweens de *squash & stretch* al saltar/aterrizar y una leve inclinación al correr, sin necesidad de spritesheets externos.
+
+### Temas visuales (fondo por nivel)
+Cada nivel declara un `theme` en sus datos y `BackgroundSystem.build(theme)` pinta un fondo **completamente distinto**. Es la razón por la que el nivel 1 y el 2 ya no se parecen. Cada tema genera sus propias texturas con claves únicas (p. ej. `bg_sky_forest` vs `bg_sky_cave`) para que un nivel no herede el fondo de otro desde la caché de Phaser.
+
+| Tema | Aspecto | Capas |
+|---|---|---|
+| `forest` (1-1) | Bosque diurno | Cielo azul degradado · sol con halo · colinas lejanas y cercanas con árboles · nubes en movimiento · hojas cayendo |
+| `cave` (1-2) | Cueva subterránea | Oscuridad · muro rocoso tileado · cristales luminiscentes (blend ADD, pulsantes) · viñeta (blend MULTIPLY) · motas de polvo flotante |
+
+Cada capa usa un `scrollFactor` distinto para el efecto **parallax**. Para añadir un tema nuevo, crea un método `_buildX()` en `BackgroundSystem.js`, regístralo en el `switch` de `build()` y referencia el tema desde el `theme` del nivel.
 
 ### Enemigos
 - **Slime** 🟢 — patrulla horizontalmente sobre plataformas, rebota al chocar con paredes y tiene su propia gravedad.

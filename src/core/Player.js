@@ -39,6 +39,9 @@ class Player {
     this.jumpBufferTimer = 0;
     this.wasOnGround    = false;
     this.isJumping      = false;  // para salto variable
+    this.walkTimer      = 0;      // ciclo de caminado
+    this.walkFrame      = 0;      // 0 → walk_a, 1 → walk_b
+    this.currentFrame   = '';     // textura activa (evita setTexture redundante)
 
     // ── Sprite (generado por código) ──────────────────────
     this._buildSprite(x, y);
@@ -60,48 +63,123 @@ class Player {
   //  CONSTRUCCIÓN VISUAL
   // ─────────────────────────────────────────────────────────
 
-  /** Crea el sprite del jugador con gráfico procedural */
+  /** Crea el sprite del jugador y sus frames de animación procedurales */
   _buildSprite(x, y) {
     const scene = this.scene;
 
-    // Dibujamos el personaje píxel a píxel en una textura
-    if (!scene.textures.exists('player_tex')) {
-      const g = scene.make.graphics({ x: 0, y: 0, add: false });
-      // Cuerpo
-      g.fillStyle(0xe84393); g.fillRect(4, 8, 16, 14);
-      // Cabeza
-      g.fillStyle(0xf7c948); g.fillRect(6, 0, 12, 10);
-      // Ojos
-      g.fillStyle(0x0a0a1a); g.fillRect(8, 3, 3, 3);
-      g.fillStyle(0x0a0a1a); g.fillRect(13, 3, 3, 3);
-      // Overol
-      g.fillStyle(0x3d7af5); g.fillRect(4, 16, 16, 6);
-      // Botones overol
-      g.fillStyle(0xf7c948); g.fillRect(7, 17, 2, 2);
-      g.fillStyle(0xf7c948); g.fillRect(15, 17, 2, 2);
-      // Piernas
-      g.fillStyle(0x3d7af5); g.fillRect(4, 22, 6, 6);
-      g.fillStyle(0x3d7af5); g.fillRect(14, 22, 6, 6);
-      // Zapatos
-      g.fillStyle(0x1a1a2e); g.fillRect(2, 26, 8, 4);
-      g.fillStyle(0x1a1a2e); g.fillRect(14, 26, 8, 4);
-      // Sombrero
-      g.fillStyle(0xe84393); g.fillRect(4, 0, 16, 4);
-      g.fillStyle(0xf7c948); g.fillRect(0, 4, 24, 2);
+    this._buildFrames();
 
-      g.generateTexture('player_tex', 24, 30);
-      g.destroy();
-    }
-
-    this.sprite = scene.physics.add.sprite(x, y, 'player_tex');
+    this.sprite = scene.physics.add.sprite(x, y, 'player_idle');
+    this.currentFrame = 'player_idle';
     this.sprite.setCollideWorldBounds(true);
     this.sprite.setDragX(this.DRAG);
     this.sprite.body.setGravityY(0); // controlamos gravedad manualmente
     this.sprite.setDepth(10);
 
-    // Hitbox más pequeña que el sprite visual
+    // Hitbox más pequeña que el sprite visual (todos los frames son 24×30)
     this.sprite.body.setSize(18, 26);
     this.sprite.body.setOffset(3, 4);
+  }
+
+  /**
+   * Genera los 5 frames del personaje como texturas 24×30 independientes:
+   * idle, walk_a, walk_b, jump y fall. Comparten cabeza/torso y varían
+   * brazos y piernas según la pose.
+   */
+  _buildFrames() {
+    const scene = this.scene;
+    if (scene.textures.exists('player_idle')) return;
+
+    const poses = {
+      player_idle:   'idle',
+      player_walk_a: 'walk_a',
+      player_walk_b: 'walk_b',
+      player_jump:   'jump',
+      player_fall:   'fall',
+    };
+
+    for (const [key, pose] of Object.entries(poses)) {
+      const g = scene.make.graphics({ x: 0, y: 0, add: false });
+      this._drawCharacter(g, pose);
+      g.generateTexture(key, 24, 30);
+      g.destroy();
+    }
+  }
+
+  /** Cabeza + torso compartidos por todas las poses (lienzo 24×30). */
+  _drawCharacter(g, pose) {
+    // ── Piernas / botas (detrás del torso), según pose ──
+    this._drawLegs(g, pose);
+    // ── Brazo trasero (se dibuja antes del torso) ──
+    this._drawArms(g, pose, true);
+
+    // ── Gorra ──
+    g.fillStyle(0xe84393); g.fillRect(6, 1, 12, 4); g.fillRect(5, 3, 14, 2); g.fillRect(8, 0, 8, 1);
+    g.fillStyle(0xff7bb5); g.fillRect(8, 1, 4, 1);                     // brillo gorra
+    // ── Cara ──
+    g.fillStyle(0xffcf9e); g.fillRect(6, 7, 12, 6);                   // piel
+    g.fillStyle(0xe0a878); g.fillRect(15, 8, 3, 4);                   // sombra mejilla
+    // ── Banda dorada de la gorra ──
+    g.fillStyle(0xf7c948); g.fillRect(4, 5, 16, 2);
+    // ── Ojos ──
+    g.fillStyle(0xffffff); g.fillRect(8, 8, 3, 3); g.fillRect(13, 8, 3, 3);
+    g.fillStyle(0x1a1a2e); g.fillRect(9, 9, 2, 2); g.fillRect(14, 9, 2, 2);
+    g.fillStyle(0xffffff); g.fillRect(9, 9, 1, 1); g.fillRect(14, 9, 1, 1); // brillo
+    // ── Mejillas + boca ──
+    g.fillStyle(0xff9ec4); g.fillRect(7, 11, 1, 1); g.fillRect(16, 11, 1, 1);
+    g.fillStyle(0xb82d6e); g.fillRect(11, 12, 2, 1);
+
+    // ── Torso (túnica) ──
+    g.fillStyle(0xe84393); g.fillRect(6, 13, 12, 5);
+    g.fillStyle(0xb82d6e); g.fillRect(6, 17, 12, 1);                  // sombra inferior
+    // ── Peto azul ──
+    g.fillStyle(0x3d7af5); g.fillRect(8, 14, 8, 4); g.fillRect(8, 13, 2, 2); g.fillRect(14, 13, 2, 2);
+    g.fillStyle(0xf7c948); g.fillRect(9, 15, 1, 1); g.fillRect(14, 15, 1, 1); // botones
+
+    // ── Brazo delantero (encima del torso) ──
+    this._drawArms(g, pose, false);
+  }
+
+  /** Dibuja las piernas y botas según la pose. */
+  _drawLegs(g, pose) {
+    const pants = 0x3d7af5, pantsSh = 0x2a5bd0, boot = 0x5a3921, sole = 0x1a1a2e;
+    const leg  = (x, y, h) => { g.fillStyle(pants); g.fillRect(x, y, 4, h); g.fillStyle(pantsSh); g.fillRect(x, y, 1, h); };
+    const foot = (x, y, w) => { g.fillStyle(boot);  g.fillRect(x, y, w, 3); g.fillStyle(sole); g.fillRect(x, y + 3, w, 1); };
+
+    if (pose === 'walk_a') {
+      leg(8, 18, 6);  foot(9, 24, 6);   // pierna delantera
+      leg(12, 18, 7); foot(12, 25, 5);  // pierna trasera
+    } else if (pose === 'walk_b') {
+      leg(12, 18, 6); foot(11, 24, 6);
+      leg(8, 18, 7);  foot(7, 25, 5);
+    } else if (pose === 'jump') {
+      leg(7, 17, 5);  foot(6, 21, 5);   // recogidas
+      leg(13, 17, 5); foot(13, 21, 5);
+    } else if (pose === 'fall') {
+      leg(6, 18, 7);  foot(4, 25, 5);   // abiertas
+      leg(14, 18, 7); foot(15, 25, 5);
+    } else { // idle
+      leg(7, 18, 7);  foot(6, 25, 5);
+      leg(13, 18, 7); foot(13, 25, 5);
+    }
+  }
+
+  /** Dibuja un brazo (skin). back=true para el brazo trasero. */
+  _drawArms(g, pose, back) {
+    const skin = 0xffcf9e, skinSh = 0xe0a878;
+    const arm = (x, y, w, h) => { g.fillStyle(skin); g.fillRect(x, y, w, h); g.fillStyle(skinSh); g.fillRect(x + w - 1, y, 1, h); };
+
+    if (pose === 'jump') {
+      if (back) arm(4, 10, 2, 5); else arm(18, 10, 2, 5);      // brazos arriba
+    } else if (pose === 'fall') {
+      if (back) arm(2, 13, 3, 2); else arm(19, 13, 3, 2);      // brazos extendidos
+    } else if (pose === 'walk_a') {
+      if (back) arm(5, 15, 2, 5); else arm(17, 13, 2, 5);      // balanceo
+    } else if (pose === 'walk_b') {
+      if (back) arm(17, 15, 2, 5); else arm(5, 13, 2, 5);
+    } else { // idle
+      if (back) arm(4, 14, 2, 5); else arm(18, 14, 2, 5);
+    }
   }
 
   /** Emitter de polvo al aterrizar */
@@ -203,8 +281,8 @@ class Player {
       : this.GRAVITY_DOWN;
     body.setGravityY(extraGrav);
 
-    // ── Animación de sprite (rotación/escala simulada) ───
-    this._animateSprite(onGround, leftDown || rightDown);
+    // ── Animación de sprite (frame + inclinación) ────────
+    this._animateSprite(onGround, leftDown || rightDown, delta);
 
     // ── Muere al caer fuera del mundo ────────────────────
     if (this.sprite.y > this.scene.physics.world.bounds.height + 100) {
@@ -350,13 +428,35 @@ class Player {
   //  ANIMACIÓN VISUAL (sin spritesheets, solo tweens)
   // ─────────────────────────────────────────────────────────
 
-  _animateSprite(onGround, moving) {
-    // Inclinación leve al moverse
+  _animateSprite(onGround, moving, delta) {
+    const body    = this.sprite.body;
+    const running = moving && Math.abs(body.velocity.x) > 15;
+
+    // ── Selección de frame ───────────────────────────────
+    let frame;
     if (!onGround) {
-      this.sprite.angle = 0;
-    } else if (moving) {
-      const bob = Math.sin(this.scene.time.now * 0.015) * 3;
-      this.sprite.angle = bob;
+      frame = body.velocity.y < -20 ? 'player_jump' : 'player_fall';
+    } else if (running) {
+      // Cadencia del ciclo de caminado proporcional a la velocidad
+      const speedRatio = Phaser.Math.Clamp(Math.abs(body.velocity.x) / this.SPEED, 0.3, 1);
+      this.walkTimer += delta * speedRatio;
+      if (this.walkTimer >= 110) {
+        this.walkTimer = 0;
+        this.walkFrame ^= 1;
+      }
+      frame = this.walkFrame ? 'player_walk_a' : 'player_walk_b';
+    } else {
+      frame = 'player_idle';
+    }
+
+    if (frame !== this.currentFrame) {
+      this.sprite.setTexture(frame);
+      this.currentFrame = frame;
+    }
+
+    // ── Inclinación leve al correr ───────────────────────
+    if (onGround && running) {
+      this.sprite.angle = Math.sin(this.scene.time.now * 0.018) * 2.5;
     } else {
       this.sprite.angle = 0;
     }

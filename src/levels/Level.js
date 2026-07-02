@@ -20,8 +20,8 @@ export default class Level {
     }
 
     _init() {
-        // 1. Visuals globales (NO dependen del nivel)
-        this.backgroundSystem.build();
+        // 1. Visuals globales — el fondo depende del tema del nivel
+        this.backgroundSystem.build(this.data.theme || 'forest');
         this.textureSystem.build();
 
         // 2. Construcción del nivel (depende de data)
