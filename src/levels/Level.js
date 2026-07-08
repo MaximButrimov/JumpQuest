@@ -232,21 +232,64 @@ export default class Level {
             });
         });
 
-        // ── Estrellas de poder ────────────────────────────
+        // ── Estrellas de poder (con validación de posición) ──
         this.stars = scene.physics.add.staticGroup();
 
-        const starPositions = this.data.stars || [];
-        for (const [sx, sy] of starPositions) {
-            const star = this.stars.create(sx, sy, 'powerstar').setDepth(6);
+        // Posiciones a evitar: todas las monedas + estrellas ya colocadas
+        const avoid = (this.data.coins || []).map(([x, y]) => ({ x, y }));
+
+        for (const [sx, sy] of (this.data.stars || [])) {
+            const pos = this._findValidStarPosition(sx, sy, avoid);
+            if (!pos) continue; // ninguna posición válida → se descarta la estrella
+
+            const star = this.stars.create(pos.x, pos.y, 'powerstar').setDepth(6);
+            avoid.push({ x: pos.x, y: pos.y }); // las siguientes estrellas también la evitan
+
             scene.tweens.add({
                 targets: star, angle: 360,
                 duration: 2000, repeat: -1, ease: 'Linear'
             });
             scene.tweens.add({
-                targets: star, y: sy - 12,
+                targets: star, y: pos.y - 12,
                 duration: 1000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
             });
         }
+    }
+
+    // ─────────────────────────────
+    // VALIDACIÓN DE POSICIÓN DE ESTRELLAS
+    // ─────────────────────────────
+    // Reglas:
+    //   1. Nunca detrás del portal de salida (deben cogerse antes de terminar).
+    //   2. Distancia mínima a cualquier moneda/estrella (sin solaparse ni pegarse).
+    // Si la posición propuesta no cumple, se busca una válida cercana en espiral;
+    // si no se encuentra ninguna, se devuelve null (la estrella se descarta).
+    _findValidStarPosition(x, y, avoid) {
+        const MIN_DIST       = 44;  // px centro a centro con otros coleccionables
+        const PORTAL_MARGIN  = 48;  // px por delante del portal (lado de aproximación)
+
+        const worldW = this.scene.physics.world.bounds.width;
+        const maxX   = (this.data.exit ? this.data.exit.x : worldW) - PORTAL_MARGIN;
+
+        const clampX = (px) => Phaser.Math.Clamp(px, 40, Math.min(maxX, worldW - 40));
+        const clampY = (py) => Phaser.Math.Clamp(py, 60, 700);
+        const farFromAll = (px, py) =>
+            avoid.every(c => Phaser.Math.Distance.Between(px, py, c.x, c.y) >= MIN_DIST);
+
+        // 1) Posición original, ya restringida al límite del portal
+        let cx = clampX(x), cy = clampY(y);
+        if (farFromAll(cx, cy)) return { x: cx, y: cy };
+
+        // 2) Búsqueda en espiral (radios crecientes, varios ángulos)
+        for (let r = 24; r <= 180; r += 16) {
+            for (let a = 0; a < 360; a += 30) {
+                const rad = Phaser.Math.DegToRad(a);
+                const px  = clampX(x + Math.cos(rad) * r);
+                const py  = clampY(y + Math.sin(rad) * r);
+                if (px <= maxX && farFromAll(px, py)) return { x: px, y: py };
+            }
+        }
+        return null; // sin posición válida
     }
 
     // ─────────────────────────────

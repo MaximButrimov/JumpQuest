@@ -250,6 +250,8 @@ Para añadir nuevos niveles:
 
 El `levelId` (ej. `level_2`) es la clave usada para guardar su progreso y estrellas en `localStorage`.
 
+**Colocación de estrellas:** al construir el nivel, `Level._findValidStarPosition()` valida cada estrella de `stars`: nunca se colocan **detrás del portal de salida** (deben cogerse antes de terminar) ni **pegadas a una moneda u otra estrella** (distancia mínima de 44 px). Si la posición propuesta no cumple, se busca una válida cercana en espiral; si no hay ninguna, la estrella se descarta. Así, aunque los datos tengan una estrella mal colocada, el juego la corrige automáticamente.
+
 ---
 
 ## 📦 Dependencias
