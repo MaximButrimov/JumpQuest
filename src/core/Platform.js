@@ -24,7 +24,7 @@ class PlatformManager {
       immovable:    true
     });
 
-    this._buildTextures();
+    PlatformManager.buildTextures(this.scene);
     this.movingPlatforms = []; // {sprite, config, origin}
   }
 
@@ -32,9 +32,12 @@ class PlatformManager {
   //  TEXTURAS PROCEDURALES
   // ─────────────────────────────────────────────────────────
 
-  _buildTextures() {
-    const scene = this.scene;
-
+  /**
+   * Genera las texturas de plataforma en la caché de la escena. Estático →
+   * reutilizable desde cualquier escena (p. ej. el menú) sin instanciar el
+   * manager ni sus grupos de física.
+   */
+  static buildTextures(scene) {
     // ── Tile de plataforma estándar (32×16) ────────────────
     if (!scene.textures.exists('platform_tile')) {
       const g = scene.make.graphics({ add: false });

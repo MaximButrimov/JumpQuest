@@ -151,21 +151,22 @@ class MenuScene extends Phaser.Scene {
   create() {
     const { width: W, height: H } = this.scale;
 
-    // Texturas compartidas necesarias para el diorama (personaje + props)
+    // Texturas compartidas necesarias para el diorama (personaje + props + plataformas)
     Player.buildFrames(this);
     new TextureSystem(this).build();
+    PlatformManager.buildTextures(this);
 
     this._buildBackdrop(W, H);
     this._buildDiorama(W, H);
     this._buildTitle(W, H);
 
-    // ── Botones ──────────────────────────────────────────
-    this._buildButton(W / 2, H * 0.60, '▶  JUGAR', 0x3ddc84, 0x2ab866, () => {
+    // ── Botones (elevados para no cubrir las plataformas de la animación) ──
+    this._buildButton(W / 2, H * 0.50, '▶  JUGAR', 0x3ddc84, 0x2ab866, () => {
       this.cameras.main.fade(400, 0, 0, 0);
       this.time.delayedCall(400, () => this.scene.start('MapScene'));
     }).setDepth(21);
 
-    this._buildButton(W / 2, H * 0.72, '?  CONTROLES', 0x39d0ff, 0x2a9aCC, () => {
+    this._buildButton(W / 2, H * 0.62, '?  CONTROLES', 0x39d0ff, 0x2a9aCC, () => {
       this._showControls(W, H);
     }).setDepth(21);
 
