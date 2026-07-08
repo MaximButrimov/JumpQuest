@@ -1006,19 +1006,23 @@ class GameScene extends Phaser.Scene {
         // Ignorar si el jugador está en invencibilidad
         if (this.player.isInvincible) return;
 
-        const vy = playerSprite.body.velocity.y;
-        const vx = Math.abs(playerSprite.body.velocity.x);
+        const pBody = playerSprite.body;
+        const eBody = enemy.body;
 
-        // Stompeado: la velocidad vertical domina la horizontal.
-        // Este criterio es independiente de posición y funciona a
-        // cualquier velocidad de caída o framerate.
-        //   vy > 80     → mínimo impulso hacia abajo (evita rozar de pie)
-        //   vy > vx*0.6 → componente vertical claramente mayor que la horizontal
-        if (vy > 80 && vy > vx * 0.6) {
+        // Stomp fiable, basado en POSICIÓN (no en el ángulo de la velocidad):
+        // se considera pisotón si el jugador está descendiendo Y en el frame
+        // anterior sus pies estaban por encima de la cabeza del enemigo, es
+        // decir, viene cayendo desde arriba. Esto coincide con lo que se ve en
+        // pantalla y funciona a cualquier velocidad horizontal y de caída.
+        const descending    = pBody.velocity.y > 0;
+        const prevFeetY     = pBody.prev.y + pBody.height;      // pies el frame anterior
+        const cameFromAbove = prevFeetY <= eBody.top + 8;       // margen de tolerancia
+
+        if (descending && cameFromAbove) {
           this._killEnemy(enemy);
-          playerSprite.body.setVelocityY(-320); // rebote
+          pBody.setVelocityY(-320); // rebote hacia arriba
         } else {
-          // Golpe lateral
+          // Golpe lateral o desde abajo
           this.player.loseLife();
         }
       }
@@ -1088,6 +1092,10 @@ class GameScene extends Phaser.Scene {
   // ─────────────────────────────────────────────────────────
 
   _killEnemy(enemy) {
+    // Desactiva el cuerpo de inmediato para que el overlap no vuelva a
+    // dispararse durante el rebote (evita recibir daño justo tras el pisotón).
+    if (enemy.body) enemy.body.enable = false;
+
     this._spawnCollectFX(enemy.x, enemy.y, 0xe84393);
     this.player.collectItem(200);
 
