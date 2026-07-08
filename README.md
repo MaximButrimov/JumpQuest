@@ -35,10 +35,10 @@ Un juego de plataformas 2D estilo retro arcade construido con **Phaser 3** y Jav
 - ✅ **Calificación de 1–3 estrellas** por nivel según la puntuación final
 - ✅ Cámara con follow suave y deadzone
 - ✅ Partículas: polvo al saltar/aterrizar, destellos al recoger ítems
-- ✅ HUD: puntuación, vidas, monedas, número de nivel
+- ✅ HUD con **marcador de puntuación** en la esquina superior izquierda (actualización en tiempo real), vidas y monedas
 - ✅ **Menú con cutscene cíclica estilo Super Mario**: el personaje entra por un lateral, recorre unas plataformas, derrota a un slime de un pisotón y sale de escena; se repite en bucle detrás de la UI, sobre un fondo de colinas parallax, nubes a la deriva y luna con halo
 - ✅ Pantalla de controles desde el menú
-- ✅ Pantalla de pausa (ESC)
+- ✅ Menú de pausa (ESC): Reanudar / Reiniciar nivel / Volver al mapa, navegable con teclado (↑↓/Enter) y ratón
 - ✅ Game Over y pantalla de victoria con puntuación final
 - ✅ **Fondos temáticos por nivel** con parallax: bosque diurno (sol, colinas, nubes, hojas) vs. cueva subterránea (muro rocoso, cristales, viñeta, motas de polvo)
 - ✅ Sonidos sintetizados con Web Audio API (sin archivos externos)
@@ -79,8 +79,8 @@ JumpQuest/
 | `MenuScene` | Menú principal: cutscene cíclica (el personaje recorre plataformas y derrota a un slime) tras la UI + botones |
 | `MapScene` | Mapa de selección de niveles con progreso persistente |
 | `GameScene` | Gameplay principal (recibe `levelData`, `levelName`, `levelId`) |
-| `HUDScene` | UI superpuesta en paralelo (puntuación, vidas, monedas) |
-| `PauseScene` | Pantalla de pausa (lanzada sobre GameScene) |
+| `HUDScene` | UI superpuesta: puntuación (esquina superior izquierda), vidas y monedas, en tiempo real |
+| `PauseScene` | Menú de pausa (ESC): Reanudar / Reiniciar nivel / Volver al mapa, con navegación por teclado y ratón |
 | `GameOverScene` | Game over con puntuación final y partículas |
 | `WinScene` | Victoria con lluvia de estrellas, estrellas ganadas y guardado de progreso |
 

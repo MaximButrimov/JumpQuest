@@ -482,64 +482,48 @@ class HUDScene extends Phaser.Scene {
   create() {
     const { width: W } = this.scale;
 
-    // Panel superior semi-transparente
-    this.panelBg = this.add.graphics();
-    this.panelBg.fillStyle(0x000000, 0.55);
-    this.panelBg.fillRoundedRect(6, 6, W - 12, 42, 8);
+    // Barra superior semitransparente
+    this.add.graphics().fillStyle(0x000000, 0.55).fillRoundedRect(6, 6, W - 12, 44, 8);
 
-    // ── Vidas ───────────────────────────────────────────
-    this.add.text(14, 14, '❤', { fontSize: '14px' });
-    this.livesText = this.add.text(32, 14, '3', {
+    // ── Puntuación (esquina superior izquierda: marcador principal) ──
+    this.add.text(16, 11, 'SCORE', {
       fontFamily: "'Press Start 2P'",
-      fontSize:   '13px',
+      fontSize:   '8px',
+      color:      '#9aa4c8'
+    });
+    this.scoreText = this.add.text(16, 23, '000000', {
+      fontFamily: "'Press Start 2P'",
+      fontSize:   '18px',
+      color:      '#f7c948',
+      stroke:     '#7b5e00',
+      strokeThickness: 3
+    });
+
+    // ── Vidas (derecha) ─────────────────────────────────
+    this.add.text(W - 168, 16, '❤', { fontSize: '15px' });
+    this.livesText = this.add.text(W - 146, 17, '3', {
+      fontFamily: "'Press Start 2P'",
+      fontSize:   '14px',
       color:      '#ff4444'
     });
 
-    // ── Puntuación ──────────────────────────────────────
-    this.add.text(80, 14, 'SCORE', {
+    // ── Monedas (derecha) ───────────────────────────────
+    this.add.text(W - 96, 16, '🪙', { fontSize: '14px' });
+    this.coinText = this.add.text(W - 74, 17, '×0', {
       fontFamily: "'Press Start 2P'",
-      fontSize:   '9px',
-      color:      '#aaaaaa'
-    });
-    this.scoreText = this.add.text(80, 27, '000000', {
-      fontFamily: "'Press Start 2P'",
-      fontSize:   '13px',
+      fontSize:   '14px',
       color:      '#f7c948'
     });
 
-    // ── Monedas ─────────────────────────────────────────
-    this.add.text(220, 14, '🪙', { fontSize: '13px' });
-    this.coinText = this.add.text(238, 14, '×0', {
-      fontFamily: "'Press Start 2P'",
-      fontSize:   '13px',
-      color:      '#f7c948'
-    });
-
-    // ── Puntuación (top-right) ───────────────────────────
-    this.add.text(W - 16, 10, 'PTS', {
-      fontFamily: "'Press Start 2P'",
-      fontSize:   '7px',
-      color:      '#aaaaaa'
-    }).setOrigin(1, 0);
-    this.topRightScoreText = this.add.text(W - 16, 22, '000000', {
-      fontFamily: "'Press Start 2P'",
-      fontSize:   '13px',
-      color:      '#f7c948',
-      stroke:     '#7b5e00',
-      strokeThickness: 2
-    }).setOrigin(1, 0);
-
-    // ── Escuchar eventos de GameScene ───────────────────
+    // ── Eventos de GameScene (feedback en tiempo real) ──
     this.coinsCollected = 0;
+    const gs = this.scene.get('GameScene').events;
 
-    this.scene.get('GameScene').events.on('scoreChanged', (score) => {
-      const str = String(score).padStart(6, '0');
-      this.scoreText.setText(str);
-      this.topRightScoreText.setText(str);
-      this.tweens.add({ targets: [this.scoreText, this.topRightScoreText], scaleX: 1.2, scaleY: 1.2, duration: 80, yoyo: true });
-    });
-
-    this.scene.get('GameScene').events.on('livesChanged', (lives) => {
+    const onScore = (score) => {
+      this.scoreText.setText(String(score).padStart(6, '0'));
+      this.tweens.add({ targets: this.scoreText, scaleX: 1.18, scaleY: 1.18, duration: 90, yoyo: true });
+    };
+    const onLives = (lives) => {
       this.livesText.setText(String(lives));
       this.tweens.add({
         targets:  this.livesText,
@@ -548,11 +532,22 @@ class HUDScene extends Phaser.Scene {
         yoyo:     true,
         onComplete: () => this.livesText.setColor('#ff4444')
       });
-    });
-
-    this.scene.get('GameScene').events.on('coinCollected', () => {
+    };
+    const onCoin = () => {
       this.coinsCollected++;
       this.coinText.setText('×' + this.coinsCollected);
+      this.tweens.add({ targets: this.coinText, scaleX: 1.25, scaleY: 1.25, duration: 90, yoyo: true });
+    };
+
+    gs.on('scoreChanged',  onScore);
+    gs.on('livesChanged',  onLives);
+    gs.on('coinCollected', onCoin);
+
+    // Evita listeners acumulados/obsoletos al reiniciar el nivel
+    this.events.once('shutdown', () => {
+      gs.off('scoreChanged',  onScore);
+      gs.off('livesChanged',  onLives);
+      gs.off('coinCollected', onCoin);
     });
   }
 }
@@ -564,60 +559,112 @@ class HUDScene extends Phaser.Scene {
 class PauseScene extends Phaser.Scene {
   constructor() { super({ key: 'PauseScene' }); }
 
+  init(data) {
+    // Datos del nivel actual (para reiniciarlo correctamente)
+    this._levelData = data.levelData || null;
+    this._levelName = data.levelName || '1-1';
+    this._levelId   = data.levelId   || 'level_1';
+  }
+
   create() {
     const { width: W, height: H } = this.scale;
 
-    const overlay = this.add.graphics();
-    overlay.fillStyle(0x000000, 0.7);
-    overlay.fillRect(0, 0, W, H);
+    // Oscurecer la partida
+    this.add.graphics().fillStyle(0x0a0a1a, 0.72).fillRect(0, 0, W, H);
 
-    this.add.text(W / 2, H * 0.3, '⏸ PAUSA', {
-      fontFamily: "'Press Start 2P'",
-      fontSize:   '32px',
-      color:      '#f7c948',
-      stroke:     '#c8820a',
-      strokeThickness: 4
-    }).setOrigin(0.5);
+    // ── Panel ─────────────────────────────────────────────
+    const panelW = 380, panelH = 320;
+    const px = W / 2 - panelW / 2, py = H / 2 - panelH / 2;
+    const panel = this.add.container(W / 2, H / 2).setScale(0);
+    const box = this.add.graphics();
+    box.fillStyle(0x141433, 0.96); box.fillRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 16);
+    box.lineStyle(3, 0x39d0ff, 0.85); box.strokeRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 16);
+    panel.add(box);
 
-    this._buildBtn(W / 2, H * 0.5,  '▶  CONTINUAR', 0x3ddc84, () => {
-      this.scene.resume('GameScene');
-      this.scene.stop();
+    panel.add(this.add.text(0, -panelH / 2 + 42, '⏸ PAUSA', {
+      fontFamily: "'Press Start 2P'", fontSize: '26px',
+      color: '#f7c948', stroke: '#c8820a', strokeThickness: 4
+    }).setOrigin(0.5));
+    panel.add(this.add.text(0, -panelH / 2 + 74, 'NIVEL ' + this._levelName, {
+      fontFamily: "'Press Start 2P'", fontSize: '9px', color: '#39d0ff'
+    }).setOrigin(0.5));
+
+    // Entrada animada del panel
+    this.tweens.add({ targets: panel, scaleX: 1, scaleY: 1, duration: 260, ease: 'Back.easeOut' });
+
+    // ── Opciones ──────────────────────────────────────────
+    this.options = [
+      { label: '▶   REANUDAR',        action: () => this._resume() },
+      { label: '⟲   REINICIAR NIVEL', action: () => this._restart() },
+      { label: '🗺   VOLVER AL MAPA',  action: () => this._toMap() },
+    ];
+
+    this.buttons = [];
+    const startY = -panelH / 2 + 132, gap = 56;
+    this.options.forEach((opt, i) => {
+      const btn = this.add.text(0, startY + i * gap, opt.label, {
+        fontFamily: "'Press Start 2P'", fontSize: '13px',
+        color: '#ffffff', backgroundColor: '#232350',
+        padding: { x: 16, y: 11 }, fixedWidth: 300, align: 'center'
+      }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+      btn.on('pointerover', () => this._select(i));
+      btn.on('pointerup',   () => opt.action());
+      panel.add(btn);
+      this.buttons.push(btn);
     });
 
-    this._buildBtn(W / 2, H * 0.64, '⟲  REINICIAR', 0x39d0ff, () => {
-      this.scene.stop('GameScene');
-      this.scene.stop('HUDScene');
-      this.scene.stop();
-      this.scene.start('GameScene');
-      this.scene.start('HUDScene');
-    });
+    this.selected = 0;
+    this._select(0);
 
-    this._buildBtn(W / 2, H * 0.78, '⌂  MENÚ', 0xe84393, () => {
-      this.scene.stop('GameScene');
-      this.scene.stop('HUDScene');
-      this.scene.stop();
-      this.scene.start('MenuScene');
-    });
+    // ── Navegación por teclado ────────────────────────────
+    const kb = this.input.keyboard;
+    kb.on('keydown-UP',    () => this._select((this.selected + this.options.length - 1) % this.options.length));
+    kb.on('keydown-DOWN',  () => this._select((this.selected + 1) % this.options.length));
+    kb.on('keydown-W',     () => this._select((this.selected + this.options.length - 1) % this.options.length));
+    kb.on('keydown-S',     () => this._select((this.selected + 1) % this.options.length));
+    kb.on('keydown-ENTER', () => this.options[this.selected].action());
+    kb.once('keydown-ESC', () => this._resume());  // ESC = reanudar
 
-    // ESC para cerrar pausa
-    this.input.keyboard.once('keydown-ESC', () => {
-      this.scene.resume('GameScene');
-      this.scene.stop();
+    // Pista de controles
+    panel.add(this.add.text(0, panelH / 2 - 24, '↑↓ / ratón   ·   ENTER   ·   ESC', {
+      fontFamily: "'Press Start 2P'", fontSize: '7px', color: '#6f7bbf'
+    }).setOrigin(0.5));
+  }
+
+  /** Resalta la opción `i` (teclado o ratón). */
+  _select(i) {
+    this.selected = i;
+    this.buttons.forEach((b, j) => {
+      const on = j === i;
+      b.setStyle({ backgroundColor: on ? '#3ddc84' : '#232350', color: on ? '#08210f' : '#ffffff' });
+      b.setScale(on ? 1.05 : 1);
     });
   }
 
-  _buildBtn(x, y, label, color, cb) {
-    const btn = this.add.text(x, y, label, {
-      fontFamily: "'Press Start 2P'",
-      fontSize:   '13px',
-      color:      '#000000',
-      backgroundColor: '#' + color.toString(16).padStart(6, '0'),
-      padding:    { x: 18, y: 8 }
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+  // ── Acciones ────────────────────────────────────────────
+  _resume() {
+    this.scene.resume('GameScene');
+    this.scene.stop();
+  }
 
-    btn.on('pointerover',  () => btn.setAlpha(0.85));
-    btn.on('pointerout',   () => btn.setAlpha(1));
-    btn.on('pointerup',    cb);
+  _restart() {
+    this.scene.stop('GameScene');
+    this.scene.stop('HUDScene');
+    this.scene.stop();
+    this.scene.start('GameScene', {
+      levelData: this._levelData,
+      levelName: this._levelName,
+      levelId:   this._levelId
+    });
+    this.scene.start('HUDScene');
+  }
+
+  _toMap() {
+    this.scene.stop('GameScene');
+    this.scene.stop('HUDScene');
+    this.scene.stop();
+    this.scene.start('MapScene');
   }
 }
 
@@ -1001,7 +1048,11 @@ class GameScene extends Phaser.Scene {
     this.input.keyboard.on('keydown-ESC', () => {
       if (!this.scene.isPaused('GameScene')) {
         this.scene.pause('GameScene');
-        this.scene.launch('PauseScene');
+        this.scene.launch('PauseScene', {
+          levelData: this._levelData,
+          levelName: this._levelName,
+          levelId:   this._levelId
+        });
       }
     });
 
@@ -1151,13 +1202,15 @@ const config = {
     noAudio:         false
   },
 
+  // El orden del array es el orden de renderizado: GameScene (mundo) debe ir
+  // ANTES que HUDScene y PauseScene para que estas se dibujen por encima.
   scene: [
     BootScene,
     MenuScene,
     MapScene,
+    GameScene,
     HUDScene,
     PauseScene,
-    GameScene,
     GameOverScene,
     WinScene
   ]
