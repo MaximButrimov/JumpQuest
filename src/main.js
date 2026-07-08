@@ -3,6 +3,7 @@ import Player from './core/Player.js';
 import Level from './levels/Level.js';
 import Level1Data from './levels/Level1.js';
 import MapScene from './map/MapScene.js';
+import TextureSystem from './systems/TextureSystem.js';
 
 /**
  * ============================================================
@@ -150,101 +151,267 @@ class MenuScene extends Phaser.Scene {
   create() {
     const { width: W, height: H } = this.scale;
 
-    // ── Fondo degradado ──────────────────────────────────
-    const bg = this.add.graphics();
-    bg.fillGradientStyle(0x0a0a2e, 0x0a0a2e, 0x112266, 0x112266, 1);
-    bg.fillRect(0, 0, W, H);
+    // Texturas compartidas necesarias para el diorama (personaje + props)
+    Player.buildFrames(this);
+    new TextureSystem(this).build();
 
-    // Estrellas decorativas
-    for (let i = 0; i < 60; i++) {
-      const x = Phaser.Math.Between(0, W);
-      const y = Phaser.Math.Between(0, H * 0.7);
-      const s = this.add.circle(x, y, Phaser.Math.Between(1, 2), 0xffffff,
-                Phaser.Math.FloatBetween(0.3, 1));
-      this.tweens.add({
-        targets:  s,
-        alpha:    0.1,
-        duration: Phaser.Math.Between(600, 2000),
-        yoyo: true, repeat: -1,
-        delay: Phaser.Math.Between(0, 2000)
-      });
-    }
-
-    // ── Logo / Título ────────────────────────────────────
-    // Sombra del título
-    this.add.text(W / 2 + 4, H * 0.18 + 4, 'JUMP', {
-      fontFamily: "'Press Start 2P'",
-      fontSize:   '54px',
-      color:      '#000000'
-    }).setOrigin(0.5).setAlpha(0.5);
-
-    const titleTop = this.add.text(W / 2, H * 0.18, 'JUMP', {
-      fontFamily: "'Press Start 2P'",
-      fontSize:   '54px',
-      color:      '#f7c948',
-      stroke:     '#c8820a',
-      strokeThickness: 6
-    }).setOrigin(0.5).setScale(0).setAlpha(0);
-
-    const titleBot = this.add.text(W / 2, H * 0.32, 'QUEST', {
-      fontFamily: "'Press Start 2P'",
-      fontSize:   '54px',
-      color:      '#e84393',
-      stroke:     '#8b0042',
-      strokeThickness: 6
-    }).setOrigin(0.5).setScale(0).setAlpha(0);
-
-    // Animación de entrada del título
-    this.tweens.add({ targets: titleTop, scaleX: 1, scaleY: 1, alpha: 1, duration: 600, ease: 'Back.easeOut' });
-    this.tweens.add({ targets: titleBot, scaleX: 1, scaleY: 1, alpha: 1, duration: 600, ease: 'Back.easeOut', delay: 200 });
-
-    // Subtítulo
-    this.add.text(W / 2, H * 0.44, '— Pixel Adventure —', {
-      fontFamily: "'Press Start 2P'",
-      fontSize:   '11px',
-      color:      '#39d0ff'
-    }).setOrigin(0.5).setAlpha(0.8);
-
-    // ── Mini personaje animado ────────────────────────────
-    this._buildMenuChar(W / 2 - 160, H * 0.56);
+    this._buildBackdrop(W, H);
+    this._buildDiorama(W, H);
+    this._buildTitle(W, H);
 
     // ── Botones ──────────────────────────────────────────
-    this._buildButton(W / 2, H * 0.62, '▶  JUGAR', 0x3ddc84, 0x2ab866, () => {
+    this._buildButton(W / 2, H * 0.60, '▶  JUGAR', 0x3ddc84, 0x2ab866, () => {
       this.cameras.main.fade(400, 0, 0, 0);
       this.time.delayedCall(400, () => this.scene.start('MapScene'));
-    });
+    }).setDepth(21);
 
-    this._buildButton(W / 2, H * 0.74, '?  CONTROLES', 0x39d0ff, 0x2a9aCC, () => {
+    this._buildButton(W / 2, H * 0.72, '?  CONTROLES', 0x39d0ff, 0x2a9aCC, () => {
       this._showControls(W, H);
-    });
+    }).setDepth(21);
 
     // ── Créditos ─────────────────────────────────────────
-    this.add.text(W / 2, H - 24, 'JumpQuest v1.0  |  Made with Phaser 3', {
+    this.add.text(W / 2, H - 22, 'JumpQuest v1.0  |  Made with Phaser 3', {
       fontFamily: "'Press Start 2P'",
       fontSize:   '7px',
-      color:      '#445577'
-    }).setOrigin(0.5);
+      color:      '#8aa0c8'
+    }).setOrigin(0.5).setDepth(21);
 
     // Efecto fade-in inicial
     this.cameras.main.fadeIn(500, 0, 0, 0);
   }
 
-  _buildMenuChar(x, y) {
-    const g = this.add.graphics();
-    g.fillStyle(0xf7c948); g.fillRect(x - 6, y, 12, 10);
-    g.fillStyle(0xe84393); g.fillRect(x - 8, y + 10, 16, 14);
-    g.fillStyle(0x3d7af5); g.fillRect(x - 8, y + 18, 16, 6);
-    g.fillStyle(0x1a1a2e); g.fillRect(x - 4, y + 3, 3, 3);
-    g.fillStyle(0x1a1a2e); g.fillRect(x + 1, y + 3, 3, 3);
+  // ── Fondo: cielo crepuscular, estrellas, colinas y nubes ──
+  _buildBackdrop(W, H) {
+    const bg = this.add.graphics().setDepth(0);
+    bg.fillGradientStyle(0x1a1245, 0x1a1245, 0x2e2f7a, 0x3f5fb0, 1);
+    bg.fillRect(0, 0, W, H);
 
+    // Estrellas titilantes
+    for (let i = 0; i < 70; i++) {
+      const s = this.add.circle(
+        Phaser.Math.Between(0, W), Phaser.Math.Between(0, H * 0.6),
+        Phaser.Math.Between(1, 2), 0xffffff, Phaser.Math.FloatBetween(0.3, 1)
+      ).setDepth(1);
+      this.tweens.add({
+        targets: s, alpha: 0.1,
+        duration: Phaser.Math.Between(600, 2200),
+        yoyo: true, repeat: -1, delay: Phaser.Math.Between(0, 2000)
+      });
+    }
+
+    // Luna con halo
+    const moon = this.add.graphics().setDepth(1);
+    moon.fillStyle(0xfff3c0, 0.15); moon.fillCircle(W - 110, 90, 46);
+    moon.fillStyle(0xfff8e0, 1);    moon.fillCircle(W - 110, 90, 28);
+    moon.fillStyle(0xe8e0b0, 1);    moon.fillCircle(W - 100, 84, 8);
+    moon.fillStyle(0xe8e0b0, 1);    moon.fillCircle(W - 118, 98, 5);
+
+    // Colinas en dos capas (parallax de profundidad)
+    const far = this.add.graphics().setDepth(2);
+    far.fillStyle(0x24356e, 1);
+    far.fillEllipse(120, H, 420, 200);
+    far.fillEllipse(460, H, 520, 240);
+    far.fillEllipse(760, H, 420, 190);
+    const near = this.add.graphics().setDepth(2);
+    near.fillStyle(0x1b2a52, 1);
+    near.fillEllipse(240, H + 20, 560, 220);
+    near.fillEllipse(640, H + 20, 600, 260);
+
+    // Nubes a la deriva
+    for (let i = 0; i < 5; i++) {
+      const cloud = this.add.graphics().setDepth(2).setAlpha(Phaser.Math.FloatBetween(0.15, 0.3));
+      const cx = Phaser.Math.Between(0, W), cy = Phaser.Math.Between(50, H * 0.4);
+      cloud.fillStyle(0xffffff, 1);
+      cloud.fillEllipse(cx, cy, 90, 32);
+      cloud.fillEllipse(cx + 30, cy - 8, 60, 26);
+      cloud.fillEllipse(cx - 26, cy - 4, 54, 22);
+      this.tweens.add({
+        targets: cloud, x: '+=' + Phaser.Math.Between(30, 70),
+        duration: Phaser.Math.Between(9000, 16000),
+        yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+      });
+    }
+  }
+
+  // ── Diorama: escenario estático + cutscene cíclica estilo Mario ──
+  _buildDiorama(W, H) {
+    const groundTop = H - 46;
+    this.HERO_SCALE  = 1.8;
+    this.SLIME_SCALE = 1.6;
+    this.GROUND_FEET = groundTop + 3;   // pies ligeramente hundidos en la hierba
+
+    // Suelo de hierba
+    const ground = this.add.graphics().setDepth(5);
+    ground.fillStyle(0x2e6b3c, 1);  ground.fillRect(0, groundTop, W, H - groundTop);
+    ground.fillStyle(0x3f8a4f, 1);  ground.fillRect(0, groundTop, W, 8);
+    ground.fillStyle(0x5ab968, 1);  ground.fillRect(0, groundTop, W, 3);
+    ground.fillStyle(0x255a32, 1);
+    for (let x = 0; x < W; x += 14) ground.fillRect(x, groundTop + 8, 2, 4); // briznas
+
+    // Arbustos decorativos
+    for (const bx of [60, 250, 720]) {
+      this.add.image(bx, groundTop + 4, 'bush').setOrigin(0.5, 1).setDepth(6);
+    }
+
+    // Plataformas que recorre el personaje (pequeña escalera baja)
+    this.platA = this._menuPlatform(200, 388, 3);   // { left, right, top }
+    this.platB = this._menuPlatform(408, 352, 3);
+
+    // Polvo (aterrizajes / pisotón)
+    if (!this.textures.exists('menu_dust')) {
+      const g = this.make.graphics({ add: false });
+      g.fillStyle(0xffffff); g.fillRect(0, 0, 4, 4);
+      g.generateTexture('menu_dust', 4, 4);
+      g.destroy();
+    }
+    this.menuDust = this.add.particles(0, 0, 'menu_dust', {
+      speed: { min: 30, max: 80 }, angle: { min: 210, max: 330 },
+      scale: { start: 1, end: 0 }, lifespan: 320, quantity: 0,
+      tint: [0x8fd46a, 0xffffff], gravityY: 220
+    }).setDepth(7);
+
+    // Personaje protagonista (oculto hasta que arranca la cutscene)
+    this.menuHero = this.add.image(-40, this.GROUND_FEET, 'player_idle')
+      .setOrigin(0.5, 1).setDepth(8).setScale(this.HERO_SCALE).setVisible(false);
+    this.heroState = 'idle';
+
+    // Puntos clave del guion
+    this.slimeX      = 560;
+    this.slimeStompY = this.GROUND_FEET - Math.round(24 * this.SLIME_SCALE); // sobre su cabeza
+
+    // Ciclo de caminado: alterna frames mientras heroState === 'run'
+    this._walkToggle = 0;
+    this.time.addEvent({ delay: 110, loop: true, callback: () => {
+      if (this.heroState === 'run' && this.menuHero.visible) {
+        this._walkToggle ^= 1;
+        this.menuHero.setTexture(this._walkToggle ? 'player_walk_a' : 'player_walk_b');
+      }
+    }});
+
+    // Arranca tras un par de segundos de inactividad
+    this.time.delayedCall(1600, () => this._startCutscene());
+  }
+
+  /** Crea una plataforma con tiles de hierba. Devuelve {left, right, top}. */
+  _menuPlatform(left, top, nTiles) {
+    for (let i = 0; i < nTiles; i++) {
+      this.add.image(left + i * 32, top, 'platform_tile').setOrigin(0, 0).setDepth(6);
+    }
+    return { left, right: left + nTiles * 32, top };
+  }
+
+  // ── Cutscene cíclica ────────────────────────────────────
+  _startCutscene() {
+    const W = this.scale.width;
+    this.menuHero.setPosition(-40, this.GROUND_FEET).setTexture('player_idle').setVisible(true);
+    this._spawnCutsceneSlime();
+
+    this._runSequence([
+      done => this._heroRunTo(230, 1350, done),                 // entra corriendo
+      done => this._heroJumpTo(250, this.platA.top, done),      // sube a plataforma A
+      done => this._heroRunTo(288, 480, done),                  // cruza A
+      done => this._heroJumpTo(440, this.platB.top, done),      // salta a plataforma B
+      done => this._heroRunTo(486, 520, done),                  // cruza B
+      done => this._heroJumpTo(this.slimeX, this.slimeStompY, done), // salta sobre el slime
+      done => { this._stompSlime(); done(); },                  // ¡pisotón!
+      done => this._heroJumpTo(this.slimeX + 60, this.GROUND_FEET, done), // rebota al suelo
+      done => this._heroRunTo(W + 50, 1500, done),              // sale por la derecha
+      () => {                                                   // pausa y repite
+        this.menuHero.setVisible(false);
+        this.heroState = 'idle';
+        this.time.delayedCall(2200, () => this._startCutscene());
+      },
+    ]);
+  }
+
+  /** Ejecuta pasos en serie; cada paso recibe un callback `done`. */
+  _runSequence(steps, i = 0) {
+    if (i >= steps.length) return;
+    steps[i](() => this._runSequence(steps, i + 1));
+  }
+
+  _spawnCutsceneSlime() {
+    if (this.cutsceneSlime) this.cutsceneSlime.destroy();
+    const s = this.add.image(this.slimeX, this.GROUND_FEET, 'enemy_slime')
+      .setOrigin(0.5, 1).setDepth(7).setScale(this.SLIME_SCALE);
     this.tweens.add({
-      targets:  g,
-      y:        '-=10',
-      duration: 600,
-      yoyo:     true,
-      repeat:   -1,
-      ease:     'Sine.easeInOut'
+      targets: s, scaleY: this.SLIME_SCALE * 0.85, scaleX: this.SLIME_SCALE * 1.1,
+      duration: 430, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
     });
+    this.cutsceneSlime = s;
+  }
+
+  /** Corre horizontalmente hasta `x` (frames de caminado vía timer). */
+  _heroRunTo(x, duration, done) {
+    this.heroState = 'run';
+    this.tweens.add({ targets: this.menuHero, x, duration, ease: 'Linear', onComplete: done });
+  }
+
+  /** Salto en arco hasta (endX, endY) con frames jump/fall. */
+  _heroJumpTo(endX, endY, done) {
+    const hero = this.menuHero;
+    this.heroState = 'jump';
+    hero.setTexture('player_jump');
+    const apexY = Math.min(hero.y, endY) - 46;
+    const midX  = (hero.x + endX) / 2;
+    this.tweens.add({
+      targets: hero, x: midX, y: apexY, duration: 210, ease: 'Quad.easeOut',
+      onComplete: () => {
+        hero.setTexture('player_fall');
+        this.tweens.add({
+          targets: hero, x: endX, y: endY, duration: 230, ease: 'Quad.easeIn',
+          onComplete: () => {
+            hero.setTexture('player_idle');
+            this.menuDust.emitParticleAt(endX, endY, 5);
+            if (done) done();
+          }
+        });
+      }
+    });
+  }
+
+  _stompSlime() {
+    const s = this.cutsceneSlime;
+    if (!s) return;
+    this.cutsceneSlime = null;
+    this.menuDust.emitParticleAt(s.x, this.GROUND_FEET, 8);
+    this.tweens.add({ targets: s, scaleY: 0.15, alpha: 0, duration: 180, onComplete: () => s.destroy() });
+  }
+
+  // ── Título con entrada + flotación continua ──────────────
+  _buildTitle(W, H) {
+    const shTop = this.add.text(W / 2 + 4, H * 0.17 + 4, 'JUMP', {
+      fontFamily: "'Press Start 2P'", fontSize: '54px', color: '#000000'
+    }).setOrigin(0.5).setAlpha(0.4).setDepth(19);
+    const shBot = this.add.text(W / 2 + 4, H * 0.31 + 4, 'QUEST', {
+      fontFamily: "'Press Start 2P'", fontSize: '54px', color: '#000000'
+    }).setOrigin(0.5).setAlpha(0.4).setDepth(19);
+
+    const titleTop = this.add.text(W / 2, H * 0.17, 'JUMP', {
+      fontFamily: "'Press Start 2P'", fontSize: '54px',
+      color: '#f7c948', stroke: '#c8820a', strokeThickness: 6
+    }).setOrigin(0.5).setDepth(20).setScale(0).setAlpha(0);
+
+    const titleBot = this.add.text(W / 2, H * 0.31, 'QUEST', {
+      fontFamily: "'Press Start 2P'", fontSize: '54px',
+      color: '#e84393', stroke: '#8b0042', strokeThickness: 6
+    }).setOrigin(0.5).setDepth(20).setScale(0).setAlpha(0);
+
+    this.tweens.add({ targets: titleTop, scaleX: 1, scaleY: 1, alpha: 1, duration: 600, ease: 'Back.easeOut' });
+    this.tweens.add({
+      targets: titleBot, scaleX: 1, scaleY: 1, alpha: 1, duration: 600, ease: 'Back.easeOut', delay: 200,
+      onComplete: () => {
+        // Flotación continua de todo el logo (título + sombra)
+        this.tweens.add({
+          targets: [titleTop, titleBot, shTop, shBot], y: '-=7',
+          duration: 1700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+        });
+      }
+    });
+
+    this.add.text(W / 2, H * 0.43, '— Pixel Adventure —', {
+      fontFamily: "'Press Start 2P'", fontSize: '11px', color: '#39d0ff'
+    }).setOrigin(0.5).setAlpha(0.85).setDepth(20);
   }
 
   _buildButton(x, y, label, color, hoverColor, callback) {

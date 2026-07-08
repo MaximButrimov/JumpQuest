@@ -67,7 +67,7 @@ class Player {
   _buildSprite(x, y) {
     const scene = this.scene;
 
-    this._buildFrames();
+    Player.buildFrames(scene);
 
     this.sprite = scene.physics.add.sprite(x, y, 'player_idle');
     this.currentFrame = 'player_idle';
@@ -84,10 +84,10 @@ class Player {
   /**
    * Genera los 5 frames del personaje como texturas 24×30 independientes:
    * idle, walk_a, walk_b, jump y fall. Comparten cabeza/torso y varían
-   * brazos y piernas según la pose.
+   * brazos y piernas según la pose. Estático → reutilizable desde cualquier
+   * escena (p. ej. el menú) sin instanciar un Player.
    */
-  _buildFrames() {
-    const scene = this.scene;
+  static buildFrames(scene) {
     if (scene.textures.exists('player_idle')) return;
 
     const poses = {
@@ -100,18 +100,18 @@ class Player {
 
     for (const [key, pose] of Object.entries(poses)) {
       const g = scene.make.graphics({ x: 0, y: 0, add: false });
-      this._drawCharacter(g, pose);
+      Player._drawCharacter(g, pose);
       g.generateTexture(key, 24, 30);
       g.destroy();
     }
   }
 
   /** Cabeza + torso compartidos por todas las poses (lienzo 24×30). */
-  _drawCharacter(g, pose) {
+  static _drawCharacter(g, pose) {
     // ── Piernas / botas (detrás del torso), según pose ──
-    this._drawLegs(g, pose);
+    Player._drawLegs(g, pose);
     // ── Brazo trasero (se dibuja antes del torso) ──
-    this._drawArms(g, pose, true);
+    Player._drawArms(g, pose, true);
 
     // ── Gorra ──
     g.fillStyle(0xe84393); g.fillRect(6, 1, 12, 4); g.fillRect(5, 3, 14, 2); g.fillRect(8, 0, 8, 1);
@@ -137,11 +137,11 @@ class Player {
     g.fillStyle(0xf7c948); g.fillRect(9, 15, 1, 1); g.fillRect(14, 15, 1, 1); // botones
 
     // ── Brazo delantero (encima del torso) ──
-    this._drawArms(g, pose, false);
+    Player._drawArms(g, pose, false);
   }
 
   /** Dibuja las piernas y botas según la pose. */
-  _drawLegs(g, pose) {
+  static _drawLegs(g, pose) {
     const pants = 0x3d7af5, pantsSh = 0x2a5bd0, boot = 0x5a3921, sole = 0x1a1a2e;
     const leg  = (x, y, h) => { g.fillStyle(pants); g.fillRect(x, y, 4, h); g.fillStyle(pantsSh); g.fillRect(x, y, 1, h); };
     const foot = (x, y, w) => { g.fillStyle(boot);  g.fillRect(x, y, w, 3); g.fillStyle(sole); g.fillRect(x, y + 3, w, 1); };
@@ -165,7 +165,7 @@ class Player {
   }
 
   /** Dibuja un brazo (skin). back=true para el brazo trasero. */
-  _drawArms(g, pose, back) {
+  static _drawArms(g, pose, back) {
     const skin = 0xffcf9e, skinSh = 0xe0a878;
     const arm = (x, y, w, h) => { g.fillStyle(skin); g.fillRect(x, y, w, h); g.fillStyle(skinSh); g.fillRect(x + w - 1, y, 1, h); };
 
