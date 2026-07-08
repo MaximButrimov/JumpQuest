@@ -33,6 +33,8 @@ export default class BackgroundSystem {
 
         if (theme === 'cave') {
             this._buildCave(W, H, VW, VH);
+        } else if (theme === 'ruins') {
+            this._buildRuins(W, H, VW, VH);
         } else {
             this._buildForest(W, H, VW, VH);
         }
@@ -190,6 +192,93 @@ export default class BackgroundSystem {
             tint: [0x8fd46a, 0xf7c948, 0xe88b3a, 0x6fb37a],
         });
         leaves.setScrollFactor(0).setDepth(3);
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  TEMA: RUINAS (puentes rotos, atardecer)
+    // ══════════════════════════════════════════════════════════
+
+    _buildRuins(W, H, VW, VH) {
+        const scene = this.scene;
+
+        // ── Cielo de atardecer ────────────────────────────────
+        this._gradientSky('bg_sky_ruins', VW, VH, [
+            [0,    0x241a3a],
+            [0.35, 0x503057],
+            [0.6,  0x9a4a52],
+            [0.82, 0xd07a4a],
+            [1.0,  0xecab5e],
+        ]);
+
+        // ── Sol bajo en el horizonte (fijo en pantalla) ───────
+        if (!scene.textures.exists('sun_ruins')) {
+            const g = scene.make.graphics({ add: false });
+            for (let r = 70; r > 0; r -= 4) {
+                g.fillStyle(0xffd07a, 0.05 + 0.09 * (1 - r / 70));
+                g.fillCircle(70, 70, r);
+            }
+            g.fillStyle(0xffe4a0, 1); g.fillCircle(70, 70, 34);
+            g.generateTexture('sun_ruins', 140, 140);
+            g.destroy();
+        }
+        const sun = scene.add.image(VW * 0.28, VH * 0.72, 'sun_ruins')
+            .setScrollFactor(0).setDepth(1);
+        scene.tweens.add({ targets: sun, scale: 1.05, alpha: 0.9, duration: 4000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+
+        // ── Siluetas lejanas: torres y puentes rotos ──────────
+        if (!scene.textures.exists('ruins_far')) {
+            const g = scene.make.graphics({ add: false });
+            g.fillStyle(0x3a2440, 1);
+            // Torres desmoronadas de distintas alturas
+            const towers = [[40, 120], [110, 80], [230, 150], [300, 100], [470, 135], [560, 90], [700, 160]];
+            for (const [tx, th] of towers) {
+                g.fillRect(tx, 220 - th, 40, th);
+                // cima rota (dientes)
+                for (let k = 0; k < 4; k++) if (k % 2 === 0) g.fillRect(tx + k * 10, 220 - th - 8, 10, 8);
+            }
+            // Arcos de puente roto entre torres
+            g.lineStyle(6, 0x3a2440, 1);
+            g.beginPath(); g.arc(175, 130, 55, Math.PI, 0, false); g.strokePath();
+            g.beginPath(); g.arc(520, 150, 60, Math.PI, 0, false); g.strokePath();
+            g.generateTexture('ruins_far', 760, 230);
+            g.destroy();
+        }
+        for (let i = 0; i < Math.ceil(W / 760) + 1; i++) {
+            scene.add.image(i * 760, H, 'ruins_far')
+                .setOrigin(0, 1).setScrollFactor(0.25).setDepth(1).setAlpha(0.55);
+        }
+
+        // ── Siluetas cercanas más oscuras ─────────────────────
+        if (!scene.textures.exists('ruins_near')) {
+            const g = scene.make.graphics({ add: false });
+            g.fillStyle(0x1f1329, 1);
+            const towers = [[60, 180], [180, 130], [360, 200], [520, 150], [660, 190]];
+            for (const [tx, th] of towers) {
+                g.fillRect(tx, 210 - th, 54, th);
+                for (let k = 0; k < 5; k++) if (k % 2 === 0) g.fillRect(tx + k * 11, 210 - th - 9, 11, 9);
+            }
+            g.generateTexture('ruins_near', 760, 210);
+            g.destroy();
+        }
+        for (let i = 0; i < Math.ceil(W / 760) + 1; i++) {
+            scene.add.image(i * 760, H, 'ruins_near')
+                .setOrigin(0, 1).setScrollFactor(0.45).setDepth(2).setAlpha(0.85);
+        }
+
+        // ── Neblina / polvo a la deriva (ambiente) ────────────
+        this._pixel('mist_px', 0xffffff, 6);
+        const mist = scene.add.particles(0, 0, 'mist_px', {
+            x: { min: 0, max: VW },
+            y: { min: VH * 0.4, max: VH },
+            speedX: { min: 4, max: 18 },
+            speedY: { min: -4, max: 4 },
+            scale:  { min: 1, max: 3 },
+            lifespan: 9000,
+            frequency: 500,
+            alpha: { min: 0.04, max: 0.14 },
+            tint: [0xd8b0a0, 0xc0a0c0, 0xffffff],
+        });
+        mist.setScrollFactor(0).setDepth(3);
     }
 
     // ══════════════════════════════════════════════════════════

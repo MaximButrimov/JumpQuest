@@ -24,6 +24,9 @@ Un juego de plataformas 2D estilo retro arcade construido con **Phaser 3** y Jav
 - ✅ Plataformas estáticas (`grass` / `stone`) y móviles (horizontal / vertical)
 - ✅ Enemigos con IA básica: **slimes** 🟢 (patrullan y rebotan) y **murciélagos** 🦇 (flotan con movimiento sinusoidal)
 - ✅ Matar enemigos saltando sobre ellos
+- ✅ **Agujeros mortales** en el suelo (caer al vacío = muerte)
+- ✅ **Puentes suspendidos temporizados** que se rompen y derrumban si te entretienes sobre ellos
+- ✅ **Checkpoints** de reaparición por nivel (data-driven)
 - ✅ Monedas 🪙 (100 pts) y Estrellas ⭐ (500 pts)
 - ✅ Portal de salida al final del nivel
 - ✅ Sistema de vidas (3) + invencibilidad tras golpe
@@ -57,9 +60,10 @@ JumpQuest/
     ├── map/
     │   └── MapScene.js         # Mapa de selección de niveles + progreso (localStorage)
     ├── levels/
-    │   ├── Level.js            # Constructor del nivel (plataformas, enemigos, ítems, slimes y murciélagos)
+    │   ├── Level.js            # Constructor del nivel (plataformas, puentes, enemigos, ítems)
     │   ├── Level1.js           # Datos del nivel 1-1 "Bosque Inicial" (5600 px, 7 secciones, slimes)
-    │   └── Level2.js           # Datos del nivel "Cuevas Oscuras" (5600 px, slimes + murciélagos)
+    │   ├── Level2.js           # Datos del nivel 1-2 "Cuevas Oscuras" (5600 px, slimes + murciélagos)
+    │   └── Level3.js           # Datos del nivel 1-3 "Puentes Rotos" (agujeros mortales + puentes temporizados)
     └── systems/
         ├── BackgroundSystem.js # Fondos parallax por tema ('forest' / 'cave')
         └── TextureSystem.js    # Texturas procedurales (moneda, slime, murciélago, portal, estrella, decoraciones)
@@ -110,7 +114,7 @@ Luego abre `http://localhost:8080` en tu navegador.
 ### Gráficos
 Todos los assets son **generados proceduralmente** con la API `Graphics` de Phaser 3 — no hay archivos de imagen externos. Las texturas se crean una sola vez con `generateTexture()` y se reutilizan desde la caché de Phaser.
 
-Assets generados: `platform_tile`, `platform_stone`, `platform_moving`, `player_idle` / `player_walk_a` / `player_walk_b` / `player_jump` / `player_fall`, `coin`, `enemy_slime`, `enemy_bat`, `portal`, `powerstar`, `bush`, `totem`, `stalactite`, `stalagmite`, `cave_crystal`, `glow_px`, `particle_px`, y las texturas de fondo por tema (`bg_sky_forest`, `sun_forest`, `hills_far`, `hills_near`, `cloud_forest`, `leaf_px`, `bg_sky_cave`, `cave_wall`, `bg_crystal`, `mote_px`, `cave_vignette`).
+Assets generados: `platform_tile`, `platform_stone`, `platform_moving`, `player_idle` / `player_walk_a` / `player_walk_b` / `player_jump` / `player_fall`, `coin`, `enemy_slime`, `enemy_bat`, `portal`, `powerstar`, `bush`, `totem`, `stalactite`, `stalagmite`, `cave_crystal`, `bridge_plank`, `broken_pillar`, `glow_px`, `particle_px`, y las texturas de fondo por tema (`bg_sky_forest`, `sun_forest`, `hills_far`, `hills_near`, `cloud_forest`, `leaf_px`, `bg_sky_cave`, `cave_wall`, `bg_crystal`, `mote_px`, `cave_vignette`, `bg_sky_ruins`, `sun_ruins`, `ruins_far`, `ruins_near`, `mist_px`).
 
 ### Física
 - Motor **Arcade Physics** de Phaser 3
@@ -134,6 +138,7 @@ Cada nivel declara un `theme` en sus datos y `BackgroundSystem.build(theme)` pin
 |---|---|---|
 | `forest` (1-1) | Bosque diurno | Cielo azul degradado · sol con halo · colinas lejanas y cercanas con árboles · nubes en movimiento · hojas cayendo |
 | `cave` (1-2) | Cueva subterránea | Oscuridad · muro rocoso tileado · cristales luminiscentes (blend ADD, pulsantes) · viñeta (blend MULTIPLY) · motas de polvo flotante |
+| `ruins` (1-3) | Ruinas al atardecer | Cielo crepuscular · sol bajo en el horizonte · siluetas de torres y puentes rotos (dos capas parallax) · neblina a la deriva |
 
 Cada capa usa un `scrollFactor` distinto para el efecto **parallax**. Para añadir un tema nuevo, crea un método `_buildX()` en `BackgroundSystem.js`, regístralo en el `switch` de `build()` y referencia el tema desde el `theme` del nivel.
 
@@ -163,6 +168,13 @@ decorations: [
 
 Así, `Level1.js` usa `bush` / `totem` (bosque) y `Level2.js` usa `stalactite` / `stalagmite` / `cave_crystal` (cueva) sin tocar el código del motor. Para un tema nuevo, basta con generar la textura en `TextureSystem.js` y referenciarla en el `decorations` del nivel.
 
+### Mecánicas de peligro (nivel 1-3)
+El nivel "Puentes Rotos" introduce dos obstáculos y un sistema de reaparición, todos **data-driven**:
+
+- **Agujeros mortales** — El suelo se define como varios **tramos** (`platforms` con la misma Y); los espacios entre ellos son huecos. `PlatformManager.fillGroundBottom()` solo rellena bajo los tramos reales, así que bajo los huecos hay vacío. El borde inferior del mundo se desactiva (`setBoundsCollision(…, false)`) para que el jugador caiga; al cruzar la línea de muerte, pierde una vida.
+- **Puentes suspendidos temporizados** (`data.bridges: [{ x, y, width, fuse, breakTime }]`) — Al pisarlos arranca la mecha (`fuse` ms). Al agotarse, tiemblan fuerte (`breakTime` ms) y se **derrumban**: los tablones dejan de colisionar y caen, así que quien esté encima cae al vacío. Bajo ellos no hay suelo. El tiempo basta para cruzar corriendo, no para entretenerse.
+- **Checkpoints** (`data.checkpoints: [{ x, y }]`) — Al morir por caída (si quedan vidas), el jugador reaparece en el último checkpoint superado y los puentes derrumbados se **reconstruyen** (`Level.resetBridges()`).
+
 ### Mapa y Progreso
 La `MapScene` es un mapa del mundo con nodos de nivel conectados por un camino. Cada nodo puede estar **bloqueado** (🔒), **disponible** o **completado** (con 1–3 estrellas), y el nivel jefe se marca con 👑.
 
@@ -179,7 +191,7 @@ El progreso se guarda en `localStorage` bajo la clave `jumpquest_progress`:
 - Las **estrellas** se otorgan según la puntuación final: `≥700 → ★★★`, `≥300 → ★★☆`, resto `★☆☆`.
 - El nivel `level_1` siempre está desbloqueado por defecto.
 
-> ℹ️ Los niveles `1-1` (Bosque Inicial) y `1-2` (Cuevas Oscuras) son jugables. Los nodos `1-3` … `1-5` del mapa aún apuntan a `levelData: null` y muestran un aviso de **"Próximamente"** hasta que se creen y enlacen sus datos en `LEVEL_DEFS` dentro de `MapScene.js`.
+> ℹ️ Los niveles `1-1` (Bosque Inicial), `1-2` (Cuevas Oscuras) y `1-3` (Puentes Rotos) son jugables. Los nodos `1-4` y `1-5` del mapa aún apuntan a `levelData: null` y muestran un aviso de **"Próximamente"** hasta que se creen y enlacen sus datos en `LEVEL_DEFS` dentro de `MapScene.js`.
 
 ### Nivel 1
 El nivel tiene **5600 px de ancho** y está dividido en 7 secciones de dificultad creciente:

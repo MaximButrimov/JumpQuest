@@ -228,25 +228,38 @@ class PlatformManager {
   }
 
   /**
-   * Rellena visualmente con tiles de piedra desde groundY+1 tile
-   * hasta el límite inferior del mundo, eliminando el hueco vacío.
-   * Los tiles se añaden al staticGroup → hereda todos los colisionadores.
+   * Rellena visualmente con tiles de piedra desde groundY+1 tile hasta el
+   * límite inferior del mundo. Si se pasan `segments` (los tramos de suelo),
+   * SOLO rellena bajo ellos, dejando vacíos los huecos/agujeros del nivel.
+   * Sin `segments` rellena todo el ancho (comportamiento clásico).
    * @param {number} groundY – Y del tile de suelo superior (centro del tile)
+   * @param {Array<{x:number,width:number}>} [segments] – tramos de suelo sólido
    */
-  fillGroundBottom(groundY) {
+  fillGroundBottom(groundY, segments = null) {
     const bounds = this.scene.physics.world.bounds;
     const tileW  = 32;
     const tileH  = 16;
-    const cols   = Math.ceil(bounds.width / tileW);
 
-    // Primera fila debajo del suelo principal hasta un tile más allá del mundo
-    for (let row = 1; groundY + row * tileH <= bounds.height + tileH; row++) {
-      const y = groundY + row * tileH;
-      for (let col = 0; col < cols; col++) {
-        const tile = this.staticGroup.create(col * tileW + tileW / 2, y, 'platform_stone');
-        tile.refreshBody();
-        tile.setDepth(5);
+    // Rellena una columna vertical de tiles bajo un tramo, tileando desde
+    // `leftX` igual que createStatic → las filas inferiores quedan alineadas
+    // con la fila superior del suelo (sin píxeles desalineados).
+    const fillUnder = (leftX, count) => {
+      for (let row = 1; groundY + row * tileH <= bounds.height + tileH; row++) {
+        const y = groundY + row * tileH;
+        for (let i = 0; i < count; i++) {
+          const tile = this.staticGroup.create(leftX + i * tileW + tileW / 2, y, 'platform_stone');
+          tile.refreshBody();
+          tile.setDepth(5);
+        }
       }
+    };
+
+    if (segments) {
+      // Solo bajo los tramos reales → deja el vacío bajo los agujeros
+      for (const s of segments) fillUnder(s.x, Math.max(1, Math.floor(s.width / tileW)));
+    } else {
+      // Todo el ancho (comportamiento clásico)
+      fillUnder(0, Math.ceil(bounds.width / tileW));
     }
   }
 }

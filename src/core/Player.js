@@ -35,6 +35,9 @@ class Player {
     this.score          = 0;
     this.isAlive        = true;
     this.isInvincible   = false;
+    this.spawn          = { x, y };   // punto de aparición inicial
+    this.checkpoints    = [];         // {x, y} ordenados por x
+    this._respawning    = false;      // evita muertes múltiples por caída
     this.coyoteTimer    = 0;
     this.jumpBufferTimer = 0;
     this.wasOnGround    = false;
@@ -284,10 +287,73 @@ class Player {
     // ── Animación de sprite (frame + inclinación) ────────
     this._animateSprite(onGround, leftDown || rightDown, delta);
 
-    // ── Muere al caer fuera del mundo ────────────────────
-    if (this.sprite.y > this.scene.physics.world.bounds.height + 100) {
-      this.loseLife();
+    // ── Muere al caer al vacío (agujeros / puentes derrumbados) ──
+    if (this.sprite.y > this.scene.physics.world.bounds.height + 40) {
+      this._fallDeath();
     }
+  }
+
+  // ─────────────────────────────────────────────────────────
+  //  CHECKPOINTS / MUERTE POR CAÍDA
+  // ─────────────────────────────────────────────────────────
+
+  /** Registra los checkpoints del nivel (para reaparecer tras caer). */
+  setCheckpoints(list) {
+    this.checkpoints = (list || []).map(c => ({ x: c.x, y: c.y })).sort((a, b) => a.x - b.x);
+  }
+
+  /** Último checkpoint superado (o el punto de aparición inicial). */
+  _respawnPoint() {
+    let pt = this.spawn;
+    for (const c of this.checkpoints) {
+      if (this.sprite.x >= c.x) pt = c; else break;
+    }
+    return pt;
+  }
+
+  /** Caída mortal al vacío: pierde una vida y reaparece en el checkpoint. */
+  _fallDeath() {
+    if (!this.isAlive || this._respawning) return;
+
+    this.lives--;
+    this.scene.events.emit('livesChanged', this.lives);
+
+    if (this.scene.sound.get('sfx_hit')) {
+      this.scene.sound.play('sfx_hit', { volume: 0.5, detune: -400 });
+    }
+
+    if (this.lives <= 0) {
+      this.die();
+      return;
+    }
+
+    // Reaparece en el último checkpoint
+    this._respawning  = true;
+    this.isInvincible = true;
+
+    const pt = this._respawnPoint();
+    this.scene.cameras.main.flash(220, 60, 0, 0);
+    this.sprite.body.stop();
+    this.sprite.setVelocity(0, 0);
+    this.sprite.setPosition(pt.x, pt.y);
+    this.sprite.setAngle(0);
+    this.sprite.setAlpha(1);
+
+    // Avisa a la escena (p. ej. para reconstruir los puentes derrumbados)
+    this.scene.events.emit('playerRespawned', pt);
+
+    this.scene.tweens.add({
+      targets:  this.sprite,
+      alpha:    0,
+      duration: 90,
+      yoyo:     true,
+      repeat:   6,
+      onComplete: () => {
+        this.sprite.setAlpha(1);
+        this.isInvincible = false;
+        this._respawning  = false;
+      }
+    });
   }
 
   // ─────────────────────────────────────────────────────────

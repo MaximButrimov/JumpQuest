@@ -629,7 +629,10 @@ class GameOverScene extends Phaser.Scene {
   constructor() { super({ key: 'GameOverScene' }); }
 
   init(data) {
-    this.finalScore = data.score || 0;
+    this.finalScore = data.score     || 0;
+    this.levelId    = data.levelId   || 'level_1';
+    this.levelName  = data.levelName || '1-1';
+    this.levelData  = data.levelData || null;
   }
 
   create() {
@@ -697,7 +700,11 @@ class GameOverScene extends Phaser.Scene {
         this.time.delayedCall(300, () => {
           this.scene.stop('HUDScene');
           this.scene.stop();
-          this.scene.start('GameScene');
+          this.scene.start('GameScene', {
+            levelId:   this.levelId,
+            levelName: this.levelName,
+            levelData: this.levelData
+          });
           this.scene.start('HUDScene');
         });
       });
@@ -737,8 +744,10 @@ class WinScene extends Phaser.Scene {
   constructor() { super({ key: 'WinScene' }); }
 
   init(data) {
-    this.finalScore = data.score   || 0;
-    this.levelId    = data.levelId || 'level_1';
+    this.finalScore = data.score     || 0;
+    this.levelId    = data.levelId   || 'level_1';
+    this.levelName  = data.levelName || '1-1';
+    this.levelData  = data.levelData || null;
   }
 
   create() {
@@ -818,7 +827,11 @@ class WinScene extends Phaser.Scene {
         this.time.delayedCall(300, () => {
           this.scene.stop('HUDScene');
           this.scene.stop();
-          this.scene.start('GameScene', { levelId: this.levelId });
+          this.scene.start('GameScene', {
+            levelId:   this.levelId,
+            levelName: this.levelName,
+            levelData: this.levelData
+          });
           this.scene.start('HUDScene');
         });
       });
@@ -884,8 +897,10 @@ class GameScene extends Phaser.Scene {
     const WORLD_W = this._levelData.worldWidth || 3200;
     const WORLD_H = 800;
 
-    // Límites del mundo físico
+    // Límites del mundo físico. Se desactiva el borde inferior para que el
+    // jugador (y los enemigos) puedan caer por los agujeros hacia el vacío.
     this.physics.world.setBounds(0, 0, WORLD_W, WORLD_H);
+    this.physics.world.setBoundsCollision(true, true, true, false);
     this.physics.world.gravity.y = 0; // cada entidad maneja su propia gravedad
 
     // ── Plataformas ───────────────────────────────────────
@@ -896,9 +911,20 @@ class GameScene extends Phaser.Scene {
 
     // ── Jugador ───────────────────────────────────────────
     this.player = new Player(this, 80, 680);
+    this.player.setCheckpoints(this._levelData.checkpoints);
 
     // Colisores jugador ↔ plataformas
     this.platformManager.addColliders(this.player.gameObject);
+
+    // ── Puentes suspendidos: al pisarlos arranca su temporizador ──
+    this.level.bridges.forEach(bridge => {
+      this.physics.add.collider(this.player.gameObject, bridge.group,
+        () => this.level.triggerBridge(bridge));
+      this.physics.add.collider(this.level.enemies, bridge.group);
+    });
+
+    // Reconstruye los puentes derrumbados cuando el jugador reaparece
+    this.events.on('playerRespawned', () => this.level.resetBridges());
 
     // ── Colisiones: jugador ↔ monedas ────────────────────
     this.physics.add.overlap(
@@ -957,7 +983,12 @@ class GameScene extends Phaser.Scene {
       this.time.delayedCall(650, () => {
         this.scene.stop('HUDScene');
         this.scene.stop();
-        this.scene.start('GameOverScene', { score: this.player.score });
+        this.scene.start('GameOverScene', {
+          score:     this.player.score,
+          levelId:   this._levelId,
+          levelName: this._levelName,
+          levelData: this._levelData
+        });
       });
     });
 
@@ -1058,7 +1089,12 @@ class GameScene extends Phaser.Scene {
       this.time.delayedCall(550, () => {
         this.scene.stop('HUDScene');
         this.scene.stop();
-        this.scene.start('WinScene', { score: this.player.score });
+        this.scene.start('WinScene', {
+          score:     this.player.score,
+          levelId:   this._levelId,
+          levelName: this._levelName,
+          levelData: this._levelData
+        });
       });
     });
   }

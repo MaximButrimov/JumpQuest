@@ -11,6 +11,7 @@ export default class TextureSystem {
         this._buildPowerStar();
         this._buildDecorations();
         this._buildCaveDecorations();
+        this._buildBridgeParts();
     }
 
     _buildCoin() {
@@ -197,6 +198,41 @@ export default class TextureSystem {
             g.fillTriangle(19, 12, 15, 21, 23, 21);
             g.fillTriangle(15, 21, 23, 21, 19, 30);
             g.generateTexture('cave_crystal', 24, 30);
+            g.destroy();
+        }
+    }
+
+    // ── Piezas para puentes rotos (nivel 1-3) ────────────────────
+    _buildBridgeParts() {
+        const scene = this.scene;
+
+        // Tablón de madera del puente (24×12)
+        if (!scene.textures.exists('bridge_plank')) {
+            const g = scene.make.graphics({ add: false });
+            g.fillStyle(0x6b4a2a); g.fillRect(0, 1, 24, 10);   // cuerpo
+            g.fillStyle(0x8a643c); g.fillRect(0, 1, 24, 2);    // brillo superior
+            g.fillStyle(0x452c15); g.fillRect(0, 9, 24, 2);    // sombra inferior
+            g.fillStyle(0x5a3d22); g.fillRect(11, 1, 2, 10);   // junta central
+            g.fillStyle(0x3a2614); g.fillRect(3, 4, 1, 4); g.fillRect(20, 4, 1, 4); // clavos
+            g.generateTexture('bridge_plank', 24, 12);
+            g.destroy();
+        }
+
+        // Pilar de piedra roto (28×80, origin 0.5,1)
+        if (!scene.textures.exists('broken_pillar')) {
+            const g = scene.make.graphics({ add: false });
+            g.fillStyle(0x6a6478); g.fillRect(4, 18, 20, 62);        // fuste
+            g.fillStyle(0x847e96); g.fillRect(4, 18, 4, 62);         // brillo izq.
+            g.fillStyle(0x484356); g.fillRect(20, 18, 4, 62);        // sombra der.
+            // Cima rota (irregular)
+            g.fillStyle(0x6a6478);
+            g.fillTriangle(4, 20, 10, 6, 15, 20);
+            g.fillTriangle(14, 20, 20, 11, 24, 20);
+            // Grietas
+            g.fillStyle(0x373345); g.fillRect(12, 30, 1, 22); g.fillRect(9, 52, 1, 16);
+            // Base ancha
+            g.fillStyle(0x565266); g.fillRect(1, 74, 26, 6);
+            g.generateTexture('broken_pillar', 28, 80);
             g.destroy();
         }
     }
