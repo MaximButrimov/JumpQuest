@@ -7,22 +7,14 @@
  *    · Coyote time & jump buffer para control preciso
  *    · Sistema de vidas e invencibilidad tras golpe
  *    · Callbacks de colisión con enemigos y coleccionables
- *    · Física por tipo de superficie (p. ej. deslizamiento en hielo)
+ *
+ *  La física por superficie (deslizamiento en hielo, etc.) NO vive aquí:
+ *  las reglas están en mechanics/SurfacePhysics.js. El Player solo consulta
+ *  y aplica la superficie que pisa (detectada por PlatformManager).
  * ============================================================
  */
 
-/**
- * Física de movimiento en suelo según el TIPO de superficie pisada.
- * Reutilizable por cualquier nivel: basta con que sus plataformas usen el
- * tipo correspondiente (p. ej. `texture: 'ice'`) para que el jugador aplique
- * automáticamente estos valores. Añadir superficies nuevas = añadir una clave.
- *   · accel → aceleración horizontal en suelo (px/s²)
- *   · drag  → fricción al soltar el mando (px/s²); baja = sigue deslizando
- */
-const SURFACE_PHYSICS = {
-  normal: { accel: 900, drag: 800 },   // agarre normal: frena rápido
-  ice:    { accel: 320, drag: 80  },   // hielo: cuesta arrancar/girar y desliza
-};
+import { surfacePhysics } from '../mechanics/SurfacePhysics.js';
 
 class Player {
   /**
@@ -260,7 +252,7 @@ class Player {
     // ── Movimiento horizontal (según la superficie pisada) ──
     // En suelo, la aceleración y la fricción dependen del tipo de superficie
     // (normal / hielo). En el aire se usan siempre los valores estándar.
-    const surf  = SURFACE_PHYSICS[this.groundSurface] || SURFACE_PHYSICS.normal;
+    const surf  = surfacePhysics(this.groundSurface);
     const accel = onGround ? surf.accel : this.ACCELERATION;
 
     const leftDown  = this.cursors.left.isDown  || this.wasdKeys.left.isDown;

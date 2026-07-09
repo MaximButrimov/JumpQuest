@@ -56,8 +56,11 @@ JumpQuest/
 └── src/
     ├── main.js                 # Config de Phaser + escenas (Boot, Menu, HUD, Pause, Game, GameOver, Win)
     ├── core/
-    │   ├── Player.js           # Lógica del jugador (movimiento, vidas, física)
-    │   └── Platform.js         # Plataformas estáticas y móviles
+    │   ├── Player.js           # Lógica del jugador (movimiento, vidas, saltos)
+    │   └── Platform.js         # Plataformas estáticas/móviles + detección de superficie
+    ├── mechanics/              # Mecánicas modulares, reutilizables por cualquier nivel
+    │   ├── BridgeSystem.js     # Puentes suspendidos temporizados que se derrumban
+    │   └── SurfacePhysics.js   # Reglas de fricción por superficie (hielo, normal, …)
     ├── map/
     │   └── MapScene.js         # Mapa de selección de niveles + progreso (localStorage)
     ├── levels/
@@ -148,7 +151,7 @@ Cada capa usa un `scrollFactor` distinto para el efecto **parallax**. Para añad
 ### Enemigos
 - **Slime** 🟢 — patrulla horizontalmente sobre plataformas, rebota al chocar con paredes y tiene su propia gravedad.
 - **Murciélago** 🦇 — enemigo de cueva; flota sin gravedad describiendo un movimiento sinusoidal en Y (`floatAmplitude` / `floatSpeed`) mientras patrulla en X.
-- Ambos se eliminan saltándoles encima (+200 pts): el criterio de "stomp" compara la velocidad vertical contra la horizontal, por lo que es independiente de la posición y del framerate.
+- Ambos se eliminan saltándoles encima (+200 pts): el criterio de "stomp" está basado en **posición** (el jugador desciende y sus pies venían por encima de la cabeza del enemigo), por lo que coincide con lo que se ve en pantalla a cualquier velocidad.
 
 ### Decoraciones (por nivel)
 Las decoraciones son **data-driven**: cada nivel declara las suyas en `data.decorations` y `Level.js` las dibuja de forma genérica, sin lógica específica por tema. Cada entrada es un descriptor:
@@ -171,21 +174,37 @@ decorations: [
 
 Así, `Level1.js` usa `bush` / `totem` (bosque) y `Level2.js` usa `stalactite` / `stalagmite` / `cave_crystal` (cueva) sin tocar el código del motor. Para un tema nuevo, basta con generar la textura en `TextureSystem.js` y referenciarla en el `decorations` del nivel.
 
+### Mecánicas modulares (`src/mechanics/`)
+Cada mecánica del juego se implementa como un **módulo independiente** en `src/mechanics/`, encapsulando solo su lógica. Ni los niveles ni el controlador del jugador contienen la lógica de una mecánica concreta: la **importan** y **la invocan**. Esto mantiene una separación clara de responsabilidades y permite reutilizar cualquier mecánica en varios niveles sin duplicar código.
+
+| Módulo | Mecánica | API principal |
+|---|---|---|
+| [`BridgeSystem.js`](src/mechanics/BridgeSystem.js) | Puentes temporizados que se derrumban | `build(defs)` · `addColliders(player, enemies)` · `reset()` |
+| [`SurfacePhysics.js`](src/mechanics/SurfacePhysics.js) | Fricción por superficie (hielo, …) | `surfacePhysics(surface)` → `{ accel, drag }` |
+
+**Patrón para una mecánica nueva:** crea `src/mechanics/MiMecanica.js` con una clase (que reciba la `scene`) o funciones puras; expón métodos claros; instánciala/refréncala desde el nivel o la escena que la necesite. Ejemplo de uso (puentes, en `Level.js`):
+
+```js
+import BridgeSystem from '../mechanics/BridgeSystem.js';
+this.bridgeSystem = new BridgeSystem(scene).build(data.bridges);
+// y desde GameScene:  bridgeSystem.addColliders(player, enemies)
+```
+
 ### Superficies y deslizamiento (nivel 1-4)
 La física de movimiento en suelo depende del **tipo de superficie** que pisa el jugador, definido de forma **reutilizable** (no acoplado a ningún nivel):
 
 - Cada plataforma declara su material vía `texture` en los datos: `'grass'` / `'stone'` (agarre normal) o `'ice'` (deslizante). `PlatformManager` genera la textura y etiqueta cada tile con su `surface`.
 - `PlatformManager.addColliders(sprite, onSurface)` detecta genéricamente el tile bajo los pies del jugador y reporta su superficie cada frame.
-- `Player` mantiene un mapa `SURFACE_PHYSICS = { normal, ice }` (aceleración + fricción por superficie) y lo aplica en `update()`. En hielo la fricción es baja → al soltar el mando el personaje **sigue deslizándose**, y la aceleración es menor → cuesta arrancar y cambiar de dirección.
+- Las **reglas** de cada superficie (aceleración + fricción) viven en el módulo [`mechanics/SurfacePhysics.js`](src/mechanics/SurfacePhysics.js). `Player` solo las consulta con `surfacePhysics(surface)` y las aplica en `update()` — no contiene lógica de hielo. En hielo la fricción es baja → al soltar el mando el personaje **sigue deslizándose**, y la aceleración es menor → cuesta arrancar y cambiar de dirección.
 
-Como toda la lógica vive en `Player` + `PlatformManager`, **cualquier nivel** que use plataformas `'ice'` obtiene el deslizamiento automáticamente. Añadir un material nuevo (p. ej. barro, arena) = añadir una clave a `SURFACE_PHYSICS` y su textura.
+Añadir un material nuevo (p. ej. barro, arena) = añadir una clave a `SurfacePhysics.js` y su textura. **Cualquier nivel** que use ese `texture` lo obtiene automáticamente, sin tocar `Player` ni el nivel.
 
 ### Mecánicas de peligro (nivel 1-3)
 El nivel "Puentes Rotos" introduce dos obstáculos y un sistema de reaparición, todos **data-driven**:
 
 - **Agujeros mortales** — El suelo se define como varios **tramos** (`platforms` con la misma Y); los espacios entre ellos son huecos. `PlatformManager.fillGroundBottom()` solo rellena bajo los tramos reales, así que bajo los huecos hay vacío. El borde inferior del mundo se desactiva (`setBoundsCollision(…, false)`) para que el jugador caiga; al cruzar la línea de muerte, pierde una vida.
-- **Puentes suspendidos temporizados** (`data.bridges: [{ x, y, width, fuse, breakTime }]`) — Al pisarlos arranca la mecha (`fuse` ms). Al agotarse, tiemblan fuerte (`breakTime` ms) y se **derrumban**: los tablones dejan de colisionar y caen, así que quien esté encima cae al vacío. Bajo ellos no hay suelo. El tiempo basta para cruzar corriendo, no para entretenerse.
-- **Checkpoints** (`data.checkpoints: [{ x, y }]`) — Al morir por caída (si quedan vidas), el jugador reaparece en el último checkpoint superado y los puentes derrumbados se **reconstruyen** (`Level.resetBridges()`).
+- **Puentes suspendidos temporizados** (`data.bridges: [{ x, y, width, fuse, breakTime }]`) — Mecánica encapsulada en el módulo [`mechanics/BridgeSystem.js`](src/mechanics/BridgeSystem.js). Al pisarlos arranca la mecha (`fuse` ms). Al agotarse, tiemblan fuerte (`breakTime` ms) y se **derrumban**: los tablones dejan de colisionar y caen, así que quien esté encima cae al vacío. Bajo ellos no hay suelo. El tiempo basta para cruzar corriendo, no para entretenerse.
+- **Checkpoints** (`data.checkpoints: [{ x, y }]`) — Al morir por caída (si quedan vidas), el jugador reaparece en el último checkpoint superado y los puentes derrumbados se **reconstruyen** (`bridgeSystem.reset()`).
 
 ### Mapa y Progreso
 La `MapScene` es un mapa del mundo con nodos de nivel conectados por un camino. Cada nodo puede estar **bloqueado** (🔒), **disponible** o **completado** (con 1–3 estrellas), y el nivel jefe se marca con 👑.

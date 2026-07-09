@@ -982,15 +982,11 @@ class GameScene extends Phaser.Scene {
       (surface) => this.player.setGroundSurface(surface)
     );
 
-    // ── Puentes suspendidos: al pisarlos arranca su temporizador ──
-    this.level.bridges.forEach(bridge => {
-      this.physics.add.collider(this.player.gameObject, bridge.group,
-        () => this.level.triggerBridge(bridge));
-      this.physics.add.collider(this.level.enemies, bridge.group);
-    });
+    // ── Puentes suspendidos (mecánica en mechanics/BridgeSystem.js) ──
+    this.level.bridgeSystem.addColliders(this.player.gameObject, this.level.enemies);
 
     // Reconstruye los puentes derrumbados cuando el jugador reaparece
-    this.events.on('playerRespawned', () => this.level.resetBridges());
+    this.events.on('playerRespawned', () => this.level.bridgeSystem.reset());
 
     // ── Colisiones: jugador ↔ monedas ────────────────────
     this.physics.add.overlap(
