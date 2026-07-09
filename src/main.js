@@ -976,8 +976,11 @@ class GameScene extends Phaser.Scene {
     this.player = new Player(this, 80, 680);
     this.player.setCheckpoints(this._levelData.checkpoints);
 
-    // Colisores jugador ↔ plataformas
-    this.platformManager.addColliders(this.player.gameObject);
+    // Colisores jugador ↔ plataformas (con detección de superficie: hielo, etc.)
+    this.platformManager.addColliders(
+      this.player.gameObject,
+      (surface) => this.player.setGroundSurface(surface)
+    );
 
     // ── Puentes suspendidos: al pisarlos arranca su temporizador ──
     this.level.bridges.forEach(bridge => {

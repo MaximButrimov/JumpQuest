@@ -12,6 +12,7 @@ export default class TextureSystem {
         this._buildDecorations();
         this._buildCaveDecorations();
         this._buildBridgeParts();
+        this._buildSnowDecorations();
     }
 
     _buildCoin() {
@@ -233,6 +234,44 @@ export default class TextureSystem {
             // Base ancha
             g.fillStyle(0x565266); g.fillRect(1, 74, 26, 6);
             g.generateTexture('broken_pillar', 28, 80);
+            g.destroy();
+        }
+    }
+
+    // ── Decoraciones nevadas (nivel 1-4) ─────────────────────────
+    _buildSnowDecorations() {
+        const scene = this.scene;
+
+        // Pino nevado (36×60, origin 0.5,1)
+        if (!scene.textures.exists('snow_pine')) {
+            const g = scene.make.graphics({ add: false });
+            g.fillStyle(0x6b4a2a); g.fillRect(15, 50, 6, 10);        // tronco
+            g.fillStyle(0x2f6b45);                                   // follaje
+            g.fillTriangle(18, 4,  4, 26, 32, 26);
+            g.fillTriangle(18, 18, 1, 42, 35, 42);
+            g.fillTriangle(18, 32, 3, 54, 33, 54);
+            g.fillStyle(0xffffff);                                   // nieve
+            g.fillTriangle(18, 4,  10, 16, 26, 16);
+            g.fillTriangle(18, 18, 8,  31, 28, 31);
+            g.fillTriangle(18, 32, 9,  45, 27, 45);
+            g.generateTexture('snow_pine', 36, 60);
+            g.destroy();
+        }
+
+        // Muñeco de nieve (26×34, origin 0.5,1)
+        if (!scene.textures.exists('snowman')) {
+            const g = scene.make.graphics({ add: false });
+            g.fillStyle(0xffffff);
+            g.fillCircle(13, 26, 11);                 // base
+            g.fillCircle(13, 12, 8);                  // cabeza
+            g.fillStyle(0xd7e6f2);
+            g.fillEllipse(13, 27, 18, 8);             // sombra base
+            g.fillStyle(0x1a1a2e);
+            g.fillRect(10, 10, 2, 2); g.fillRect(15, 10, 2, 2); // ojos
+            g.fillRect(9, 22, 2, 2); g.fillRect(13, 24, 2, 2);  // botones
+            g.fillStyle(0xe8822a);
+            g.fillTriangle(13, 13, 20, 14, 13, 15);   // nariz zanahoria
+            g.generateTexture('snowman', 26, 34);
             g.destroy();
         }
     }

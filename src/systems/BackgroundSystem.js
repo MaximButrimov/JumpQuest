@@ -35,6 +35,8 @@ export default class BackgroundSystem {
             this._buildCave(W, H, VW, VH);
         } else if (theme === 'ruins') {
             this._buildRuins(W, H, VW, VH);
+        } else if (theme === 'snow') {
+            this._buildSnow(W, H, VW, VH);
         } else {
             this._buildForest(W, H, VW, VH);
         }
@@ -192,6 +194,85 @@ export default class BackgroundSystem {
             tint: [0x8fd46a, 0xf7c948, 0xe88b3a, 0x6fb37a],
         });
         leaves.setScrollFactor(0).setDepth(3);
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  TEMA: NIEVE (escenario nevado / hielo)
+    // ══════════════════════════════════════════════════════════
+
+    _buildSnow(W, H, VW, VH) {
+        const scene = this.scene;
+
+        // ── Cielo invernal frío ───────────────────────────────
+        this._gradientSky('bg_sky_snow', VW, VH, [
+            [0,    0x5a7ba8],
+            [0.4,  0x8fb0d4],
+            [0.72, 0xc4d8ea],
+            [1.0,  0xe9f1f9],
+        ]);
+
+        // ── Sol pálido con halo (fijo en pantalla) ────────────
+        if (!scene.textures.exists('sun_snow')) {
+            const g = scene.make.graphics({ add: false });
+            for (let r = 56; r > 0; r -= 4) {
+                g.fillStyle(0xffffff, 0.05 + 0.07 * (1 - r / 56));
+                g.fillCircle(56, 56, r);
+            }
+            g.fillStyle(0xf4faff, 1); g.fillCircle(56, 56, 24);
+            g.generateTexture('sun_snow', 112, 112);
+            g.destroy();
+        }
+        scene.add.image(VW - 120, 96, 'sun_snow').setScrollFactor(0).setDepth(1).setAlpha(0.9);
+
+        // ── Montañas nevadas lejanas ──────────────────────────
+        if (!scene.textures.exists('snow_mtn_far')) {
+            const g = scene.make.graphics({ add: false });
+            g.fillStyle(0x9fb6cf, 1);
+            g.fillTriangle(0, 220, 180, 60, 360, 220);
+            g.fillTriangle(220, 220, 420, 40, 620, 220);
+            g.fillTriangle(500, 220, 680, 80, 800, 220);
+            // Cimas nevadas
+            g.fillStyle(0xffffff, 1);
+            g.fillTriangle(180, 60, 210, 104, 150, 104);
+            g.fillTriangle(420, 40, 456, 92, 384, 92);
+            g.fillTriangle(680, 80, 706, 116, 654, 116);
+            g.generateTexture('snow_mtn_far', 800, 220);
+            g.destroy();
+        }
+        for (let i = 0; i < Math.ceil(W / 800) + 1; i++) {
+            scene.add.image(i * 800, H, 'snow_mtn_far')
+                .setOrigin(0, 1).setScrollFactor(0.2).setDepth(1).setAlpha(0.8);
+        }
+
+        // ── Colinas nevadas cercanas ──────────────────────────
+        if (!scene.textures.exists('snow_hills')) {
+            const g = scene.make.graphics({ add: false });
+            g.fillStyle(0xeaf3fb, 1);
+            g.fillEllipse(180, 210, 460, 220);
+            g.fillEllipse(560, 210, 500, 240);
+            g.fillStyle(0xcfe0f0, 0.6);
+            g.fillEllipse(180, 230, 300, 140);
+            g.generateTexture('snow_hills', 800, 210);
+            g.destroy();
+        }
+        for (let i = 0; i < Math.ceil(W / 800) + 1; i++) {
+            scene.add.image(i * 800, H, 'snow_hills')
+                .setOrigin(0, 1).setScrollFactor(0.42).setDepth(2).setAlpha(0.95);
+        }
+
+        // ── Copos de nieve cayendo (ambiente) ─────────────────
+        this._pixel('snow_px', 0xffffff, 5);
+        const snow = scene.add.particles(0, -10, 'snow_px', {
+            x: { min: 0, max: VW },
+            speedY: { min: 25, max: 60 },
+            speedX: { min: -20, max: 20 },
+            scale:  { min: 0.4, max: 1.1 },
+            lifespan: 8000,
+            frequency: 180,
+            alpha: { min: 0.5, max: 0.95 },
+            tint: [0xffffff, 0xeaf4ff],
+        });
+        snow.setScrollFactor(0).setDepth(3);
     }
 
     // ══════════════════════════════════════════════════════════

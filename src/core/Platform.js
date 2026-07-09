@@ -103,6 +103,26 @@ class PlatformManager {
       g.generateTexture('platform_moving', 32, 12);
       g.destroy();
     }
+
+    // ── Tile de hielo (32×16) — superficie deslizante ─────
+    if (!scene.textures.exists('platform_ice')) {
+      const g = scene.make.graphics({ add: false });
+
+      g.fillStyle(0x9ad8ee); g.fillRect(0, 0, 32, 16);       // cuerpo de hielo
+      g.fillStyle(0xd6f2ff); g.fillRect(0, 0, 32, 4);        // brillo superior
+      g.fillStyle(0x6fb2d0); g.fillRect(0, 13, 32, 3);       // sombra inferior
+      // Reflejos / brillos glaseados
+      g.fillStyle(0xffffff, 0.75); g.fillRect(3, 1, 9, 1);
+      g.fillStyle(0xffffff, 0.4);  g.fillRect(18, 2, 7, 1);
+      // Grietas sutiles del hielo
+      g.fillStyle(0x8ac6de);
+      g.fillRect(11, 5, 1, 7);
+      g.fillRect(23, 4, 1, 8);
+      g.fillRect(6, 9, 4, 1);
+
+      g.generateTexture('platform_ice', 32, 16);
+      g.destroy();
+    }
   }
 
   // ─────────────────────────────────────────────────────────
@@ -114,11 +134,14 @@ class PlatformManager {
    * @param {number} x        – Borde izquierdo
    * @param {number} y        – Posición Y
    * @param {number} width    – Ancho total en píxeles
-   * @param {string} [type]   – 'grass' | 'stone'
+   * @param {string} [type]   – 'grass' | 'stone' | 'ice'
    * @returns {Phaser.GameObjects.Image[]}
    */
   createStatic(x, y, width, type = 'grass') {
-    const texKey = type === 'stone' ? 'platform_stone' : 'platform_tile';
+    const TEX = { stone: 'platform_stone', ice: 'platform_ice', grass: 'platform_tile' };
+    const texKey  = TEX[type] || 'platform_tile';
+    // Tipo de superficie para la física (fricción). 'ice' → deslizante.
+    const surface = (type === 'ice') ? 'ice' : 'normal';
     const tileW  = 32;
     const count  = Math.max(1, Math.floor(width / tileW));
     const created = [];
@@ -131,6 +154,7 @@ class PlatformManager {
       );
       tile.refreshBody();
       tile.setDepth(5);
+      tile.surface = surface;   // consultado por la detección de superficie
       created.push(tile);
     }
     return created;
@@ -211,11 +235,26 @@ class PlatformManager {
 
   /**
    * Añade colisores entre el jugador y las plataformas.
+   *
+   * Si se pasa `onSurface`, se invoca cada frame con el tipo de superficie
+   * ('ice' | 'normal') del tile sobre el que está apoyado el jugador. Esto
+   * mantiene la detección de superficie genérica y reutilizable: cualquier
+   * nivel con plataformas de hielo activa el deslizamiento sin código propio.
+   *
    * @param {Phaser.Physics.Arcade.Sprite} playerSprite
+   * @param {(surface:string)=>void} [onSurface]
    */
-  addColliders(playerSprite) {
-    this.scene.physics.add.collider(playerSprite, this.staticGroup);
-    this.scene.physics.add.collider(playerSprite, this.movingGroup);
+  addColliders(playerSprite, onSurface = null) {
+    const detect = (sprite, tile) => {
+      // El tile está bajo los pies del jugador (no es una pared lateral)
+      if (tile.body && tile.body.top >= sprite.body.bottom - 6) {
+        onSurface(tile.surface || 'normal');
+      }
+    };
+    const cb = onSurface ? detect : undefined;
+
+    this.scene.physics.add.collider(playerSprite, this.staticGroup, cb);
+    this.scene.physics.add.collider(playerSprite, this.movingGroup, cb);
   }
 
   /**

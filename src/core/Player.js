@@ -7,8 +7,22 @@
  *    · Coyote time & jump buffer para control preciso
  *    · Sistema de vidas e invencibilidad tras golpe
  *    · Callbacks de colisión con enemigos y coleccionables
+ *    · Física por tipo de superficie (p. ej. deslizamiento en hielo)
  * ============================================================
  */
+
+/**
+ * Física de movimiento en suelo según el TIPO de superficie pisada.
+ * Reutilizable por cualquier nivel: basta con que sus plataformas usen el
+ * tipo correspondiente (p. ej. `texture: 'ice'`) para que el jugador aplique
+ * automáticamente estos valores. Añadir superficies nuevas = añadir una clave.
+ *   · accel → aceleración horizontal en suelo (px/s²)
+ *   · drag  → fricción al soltar el mando (px/s²); baja = sigue deslizando
+ */
+const SURFACE_PHYSICS = {
+  normal: { accel: 900, drag: 800 },   // agarre normal: frena rápido
+  ice:    { accel: 320, drag: 80  },   // hielo: cuesta arrancar/girar y desliza
+};
 
 class Player {
   /**
@@ -42,6 +56,7 @@ class Player {
     this.jumpBufferTimer = 0;
     this.wasOnGround    = false;
     this.isJumping      = false;  // para salto variable
+    this.groundSurface  = 'normal'; // superficie bajo los pies (detección genérica)
     this.walkTimer      = 0;      // ciclo de caminado
     this.walkFrame      = 0;      // 0 → walk_a, 1 → walk_b
     this.currentFrame   = '';     // textura activa (evita setTexture redundante)
@@ -242,20 +257,25 @@ class Player {
     }
     this.wasOnGround = onGround;
 
-    // ── Movimiento horizontal ────────────────────────────
+    // ── Movimiento horizontal (según la superficie pisada) ──
+    // En suelo, la aceleración y la fricción dependen del tipo de superficie
+    // (normal / hielo). En el aire se usan siempre los valores estándar.
+    const surf  = SURFACE_PHYSICS[this.groundSurface] || SURFACE_PHYSICS.normal;
+    const accel = onGround ? surf.accel : this.ACCELERATION;
+
     const leftDown  = this.cursors.left.isDown  || this.wasdKeys.left.isDown;
     const rightDown = this.cursors.right.isDown || this.wasdKeys.right.isDown;
 
     if (leftDown) {
-      body.setAccelerationX(-this.ACCELERATION);
+      body.setAccelerationX(-accel);
       this.sprite.setFlipX(true);
     } else if (rightDown) {
-      body.setAccelerationX(this.ACCELERATION);
+      body.setAccelerationX(accel);
       this.sprite.setFlipX(false);
     } else {
       body.setAccelerationX(0);
-      // Drag extra en el aire para que no resbale tanto
-      body.setDragX(onGround ? this.DRAG : this.AIR_DRAG);
+      // Fricción: en hielo es baja → el personaje sigue deslizándose.
+      body.setDragX(onGround ? surf.drag : this.AIR_DRAG);
     }
 
     // Clampeamos velocidad horizontal
@@ -526,6 +546,15 @@ class Player {
     } else {
       this.sprite.angle = 0;
     }
+  }
+
+  /**
+   * Registra el tipo de superficie que el jugador está pisando ('ice' |
+   * 'normal'). Lo llama el colisionador de plataformas cada frame. La física
+   * de movimiento se ajusta a esa superficie en update().
+   */
+  setGroundSurface(surface) {
+    this.groundSurface = surface || 'normal';
   }
 
   // ─────────────────────────────────────────────────────────
