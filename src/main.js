@@ -433,9 +433,22 @@ class MenuScene extends Phaser.Scene {
   }
 
   _showControls(W, H) {
-    const overlay = this.add.graphics();
-    overlay.fillStyle(0x000000, 0.85);
-    overlay.fillRoundedRect(W * 0.1, H * 0.15, W * 0.8, H * 0.7, 12);
+    if (this._controlsOpen) return;   // evita abrir varios paneles a la vez
+    this._controlsOpen = true;
+
+    const D = 30;                     // por encima del título (20) y botones (21)
+    const items = [];
+
+    // Fondo que oscurece la escena y BLOQUEA los clics al menú de detrás
+    items.push(this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.6)
+      .setDepth(D).setInteractive());
+
+    // Panel (estética coherente con el menú de pausa)
+    const pxL = W * 0.12, pyT = H * 0.13, pW = W * 0.76, pH = H * 0.77;
+    const panel = this.add.graphics().setDepth(D);
+    panel.fillStyle(0x141433, 0.97); panel.fillRoundedRect(pxL, pyT, pW, pH, 14);
+    panel.lineStyle(3, 0x39d0ff, 0.85); panel.strokeRoundedRect(pxL, pyT, pW, pH, 14);
+    items.push(panel);
 
     const lines = [
       '── CONTROLES ──',
@@ -453,22 +466,25 @@ class MenuScene extends Phaser.Scene {
       '',
       '── ESC para pausar ──'
     ];
-
-    const textObjs = [];
     lines.forEach((line, i) => {
-      const t = this.add.text(W / 2, H * 0.22 + i * 26, line, {
+      items.push(this.add.text(W / 2, H * 0.20 + i * 22, line, {
         fontFamily: "'Press Start 2P'",
         fontSize:   '9px',
         color:      i === 0 ? '#f7c948' : '#ffffff'
-      }).setOrigin(0.5);
-      textObjs.push(t);
+      }).setOrigin(0.5).setDepth(D + 1));
     });
 
-    const closeBtn = this._buildButton(W / 2, H * 0.82, 'CERRAR', 0xe84393, 0xb8006a, () => {
-      overlay.destroy();
-      textObjs.forEach(t => t.destroy());
+    const close = () => {
+      items.forEach(o => o.destroy());
       closeBtn.destroy();
-    });
+      this.input.keyboard.off('keydown-ESC', close);
+      this._controlsOpen = false;
+    };
+
+    const closeBtn = this._buildButton(W / 2, H * 0.855, 'CERRAR', 0xe84393, 0xb8006a, close).setDepth(D + 1);
+
+    // ESC también cierra el panel
+    this.input.keyboard.once('keydown-ESC', close);
   }
 }
 
