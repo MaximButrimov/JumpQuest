@@ -119,7 +119,7 @@ Luego abre `http://localhost:8080` en tu navegador.
 ### Gráficos
 Todos los assets son **generados proceduralmente** con la API `Graphics` de Phaser 3 — no hay archivos de imagen externos. Las texturas se crean una sola vez con `generateTexture()` y se reutilizan desde la caché de Phaser.
 
-Assets generados: `platform_tile`, `platform_stone`, `platform_moving`, `player_idle` / `player_walk_a` / `player_walk_b` / `player_jump` / `player_fall`, `coin`, `enemy_slime`, `enemy_bat`, `portal`, `powerstar`, `bush`, `totem`, `stalactite`, `stalagmite`, `cave_crystal`, `bridge_plank`, `broken_pillar`, `glow_px`, `particle_px`, y las texturas de fondo por tema (`bg_sky_forest`, `sun_forest`, `hills_far`, `hills_near`, `cloud_forest`, `leaf_px`, `bg_sky_cave`, `cave_wall`, `bg_crystal`, `mote_px`, `cave_vignette`, `bg_sky_ruins`, `sun_ruins`, `ruins_far`, `ruins_near`, `mist_px`, `platform_ice`, `snow_pine`, `snowman`, `bg_sky_snow`, `sun_snow`, `snow_mtn_far`, `snow_hills`, `snow_px`).
+Assets generados: `platform_tile`, `platform_stone`, `platform_moving`, `player_idle` / `player_walk_a` / `player_walk_b` / `player_jump` / `player_fall`, `coin`, `enemy_slime`, `enemy_bat`, `portal`, `powerstar`, `bush`, `totem`, `stalactite`, `stalagmite`, `cave_crystal`, `bridge_plank`, `broken_pillar`, `glow_px`, `particle_px`, y las texturas de fondo por tema (`bg_sky_forest`, `sun_forest`, `hills_far`, `hills_near`, `cloud_forest`, `leaf_px`, `bg_sky_cave`, `cave_wall`, `bg_crystal`, `mote_px`, `cave_vignette`, `bg_sky_ruins`, `sun_ruins`, `ruins_far`, `ruins_near`, `mist_px`, `platform_ice`, `snow_pine`, `snowman`, `bg_sky_snow`, `sun_snow`, `snow_mtn_far`, `snow_hills`, `snow_px`, y la vegetación de bosque (`tree_oak`, `tree_bg`, `bush_lush`, `fern`, `flower_red`, `flower_yellow`, `rock_moss`, `log_moss`, `roots`, `grass_tuft`, `mushroom_pair`, `fg_fern`, `sun_rays`, `forest_farline`, `forest_mid`, `pollen_px`)).
 
 ### Física
 - Motor **Arcade Physics** de Phaser 3
@@ -141,7 +141,7 @@ Cada nivel declara un `theme` en sus datos y `BackgroundSystem.build(theme)` pin
 
 | Tema | Aspecto | Capas |
 |---|---|---|
-| `forest` (1-1) | Bosque diurno | Cielo azul degradado · sol con halo · colinas lejanas y cercanas con árboles · nubes en movimiento · hojas cayendo |
+| `forest` (1-1) | Bosque diurno | Cielo degradado · sol con halo y **rayos de luz** · **línea de árboles lejana** · **bosque intermedio** · colinas · nubes · hojas cayendo · **polen** flotante |
 | `cave` (1-2) | Cueva subterránea | Oscuridad · muro rocoso tileado · cristales luminiscentes (blend ADD, pulsantes) · viñeta (blend MULTIPLY) · motas de polvo flotante |
 | `ruins` (1-3) | Ruinas al atardecer | Cielo crepuscular · sol bajo en el horizonte · siluetas de torres y puentes rotos (dos capas parallax) · neblina a la deriva |
 | `snow` (1-4) | Escenario nevado | Cielo invernal frío · sol pálido · montañas nevadas y colinas (parallax) · copos de nieve cayendo |
@@ -172,7 +172,9 @@ decorations: [
 | `depth` | `4` | Profundidad de render |
 | `flipX`, `scale`, `alpha`, `tint` | — | Modificadores opcionales |
 
-Así, `Level1.js` usa `bush` / `totem` (bosque) y `Level2.js` usa `stalactite` / `stalagmite` / `cave_crystal` (cueva) sin tocar el código del motor. Para un tema nuevo, basta con generar la textura en `TextureSystem.js` y referenciarla en el `decorations` del nivel.
+Así, `Level1.js` usa vegetación de bosque en **tres capas** (árboles de fondo en `depth 3`, vegetación de suelo en `depth 6`, helechos de primer plano semitransparentes en `depth 12`) y `Level2.js` usa `stalactite` / `stalagmite` / `cave_crystal` (cueva) sin tocar el código del motor. Para un tema nuevo, basta con generar la textura en `TextureSystem.js` y referenciarla en el `decorations` del nivel.
+
+Además, `Level._buildPlatformFoliage()` siembra automáticamente **matas de hierba, flores y setas** en el borde superior de las plataformas de `grass` (solo visual, sin física), integrándolas con el entorno. Al depender del `texture` de cada plataforma, cualquier nivel con césped lo obtiene gratis.
 
 ### Mecánicas modulares (`src/mechanics/`)
 Cada mecánica del juego se implementa como un **módulo independiente** en `src/mechanics/`, encapsulando solo su lógica. Ni los niveles ni el controlador del jugador contienen la lógica de una mecánica concreta: la **importan** y **la invocan**. Esto mantiene una separación clara de responsabilidades y permite reutilizar cualquier mecánica en varios niveles sin duplicar código.

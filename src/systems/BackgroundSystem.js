@@ -110,6 +110,43 @@ export default class BackgroundSystem {
             duration: 3000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
         });
 
+        // ── Rayos de luz (god rays) desde el sol ──────────────
+        if (!scene.textures.exists('sun_rays')) {
+            const g = scene.make.graphics({ add: false });
+            const ox = VW - 130, oy = 100;
+            g.fillStyle(0xfff3c0, 0.10);
+            for (let a = 20; a <= 150; a += 16) {
+                const r = Phaser.Math.DegToRad(a);
+                const w = 26;
+                g.fillTriangle(
+                    ox, oy,
+                    ox - Math.cos(r) * 900 - w, oy + Math.sin(r) * 900,
+                    ox - Math.cos(r) * 900 + w, oy + Math.sin(r) * 900
+                );
+            }
+            g.generateTexture('sun_rays', VW, VH);
+            g.destroy();
+        }
+        const rays = scene.add.image(VW / 2, VH / 2, 'sun_rays')
+            .setScrollFactor(0).setDepth(1).setBlendMode(Phaser.BlendModes.ADD);
+        scene.tweens.add({ targets: rays, alpha: 0.55, duration: 4200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+
+        // ── Línea de árboles muy lejana (bruma) ───────────────
+        if (!scene.textures.exists('forest_farline')) {
+            const g = scene.make.graphics({ add: false });
+            g.fillStyle(0x86bd94, 1);
+            for (let x = -20; x < 820; x += 34) {
+                g.fillCircle(x, 66, Phaser.Math.Between(22, 34));
+            }
+            g.fillRect(0, 64, 800, 110);
+            g.generateTexture('forest_farline', 800, 176);
+            g.destroy();
+        }
+        for (let i = 0; i < Math.ceil(W / 800) + 1; i++) {
+            scene.add.image(i * 800, H, 'forest_farline')
+                .setOrigin(0, 1).setScrollFactor(0.12).setDepth(1).setAlpha(0.6);
+        }
+
         // ── Colinas lejanas ───────────────────────────────────
         if (!scene.textures.exists('hills_far')) {
             const g = scene.make.graphics({ add: false });
@@ -126,6 +163,27 @@ export default class BackgroundSystem {
         for (let i = 0; i < Math.ceil(W / 800) + 1; i++) {
             scene.add.image(i * 800, H, 'hills_far')
                 .setOrigin(0, 1).setScrollFactor(0.2).setDepth(1).setAlpha(0.85);
+        }
+
+        // ── Bosque intermedio (siluetas de árboles) ───────────
+        if (!scene.textures.exists('forest_mid')) {
+            const g = scene.make.graphics({ add: false });
+            const trees = [70, 190, 330, 470, 610, 740];
+            for (const tx of trees) {
+                g.fillStyle(0x2f6b3e, 1);
+                g.fillRect(tx - 5, 120, 10, 70);                  // tronco
+                g.fillCircle(tx, 110, 40);                         // copa
+                g.fillCircle(tx - 28, 128, 26);
+                g.fillCircle(tx + 28, 128, 26);
+                g.fillStyle(0x387a48, 0.7);
+                g.fillCircle(tx - 8, 100, 20);
+            }
+            g.generateTexture('forest_mid', 800, 190);
+            g.destroy();
+        }
+        for (let i = 0; i < Math.ceil(W / 800) + 1; i++) {
+            scene.add.image(i * 800, H, 'forest_mid')
+                .setOrigin(0, 1).setScrollFactor(0.32).setDepth(2).setAlpha(0.92);
         }
 
         // ── Colinas cercanas + árboles ────────────────────────
@@ -194,6 +252,22 @@ export default class BackgroundSystem {
             tint: [0x8fd46a, 0xf7c948, 0xe88b3a, 0x6fb37a],
         });
         leaves.setScrollFactor(0).setDepth(3);
+
+        // ── Polen / motas de luz flotando (ambiente cálido) ───
+        this._pixel('pollen_px', 0xfff3c0, 4);
+        const pollen = scene.add.particles(0, 0, 'pollen_px', {
+            x: { min: 0, max: VW },
+            y: { min: 0, max: VH },
+            speedY: { min: -8, max: 6 },
+            speedX: { min: -10, max: 10 },
+            scale:  { min: 0.4, max: 1.0 },
+            lifespan: 6000,
+            frequency: 320,
+            alpha: { min: 0.1, max: 0.4 },
+            tint: [0xfff3c0, 0xffffff, 0xd8f0b0],
+            blendMode: 'ADD',
+        });
+        pollen.setScrollFactor(0).setDepth(8);
     }
 
     // ══════════════════════════════════════════════════════════

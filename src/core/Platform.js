@@ -38,28 +38,24 @@ class PlatformManager {
    * manager ni sus grupos de física.
    */
   static buildTextures(scene) {
-    // ── Tile de plataforma estándar (32×16) ────────────────
+    // ── Tile de césped sobre tierra (32×16) ────────────────
     if (!scene.textures.exists('platform_tile')) {
       const g = scene.make.graphics({ add: false });
 
-      // Base verde hierba
-      g.fillStyle(0x3ddc84); g.fillRect(0,  0, 32, 8);
-      // Cuerpo tierra
-      g.fillStyle(0x8b5e3c); g.fillRect(0,  8, 32, 8);
-      // Brillo superior
-      g.fillStyle(0x5af5a0); g.fillRect(0,  0, 32, 2);
-      // Pixel detail superior
-      g.fillStyle(0x2ab866);
-      for (let i = 0; i < 32; i += 8) {
-        g.fillRect(i + 2, 2, 4, 4);
-      }
-      // Sombra tierra
-      g.fillStyle(0x6b4020); g.fillRect(0, 14, 32, 2);
-      // Textura tierra
-      g.fillStyle(0x7a4e2d);
-      for (let i = 4; i < 32; i += 10) {
-        g.fillRect(i, 9, 3, 3);
-      }
+      // Cuerpo de tierra
+      g.fillStyle(0x7a5230); g.fillRect(0, 0, 32, 16);
+      g.fillStyle(0x5f3f22); g.fillRect(0, 11, 32, 5);          // tierra baja (sombra)
+      g.fillStyle(0x8a5f38); g.fillRect(0, 7, 32, 2);           // luz bajo el césped
+      // Guijarros / motas de tierra
+      g.fillStyle(0x9a7048); g.fillRect(4, 11, 3, 2); g.fillRect(16, 12, 2, 2); g.fillRect(25, 11, 3, 2);
+      g.fillStyle(0x4a3018); g.fillRect(10, 13, 2, 1); g.fillRect(21, 13, 2, 1);
+      // Franja de césped con borde inferior irregular (tileable cada 8px)
+      g.fillStyle(0x3fa24f); g.fillRect(0, 0, 32, 6);
+      for (let i = 0; i < 32; i += 8) g.fillRect(i, 6, 4, 2);   // dientes hacia la tierra
+      // Brillo y briznas del césped
+      g.fillStyle(0x5fc76a); g.fillRect(0, 0, 32, 2);
+      g.fillStyle(0x2f7d3f);
+      for (let i = 2; i < 32; i += 6) g.fillRect(i, 0, 1, 3);   // briznas oscuras
 
       g.generateTexture('platform_tile', 32, 16);
       g.destroy();

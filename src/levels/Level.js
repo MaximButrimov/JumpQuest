@@ -27,12 +27,39 @@ export default class Level {
 
         // 2. Construcción del nivel (depende de data)
         this._buildPlatforms();
+        this._buildPlatformFoliage();   // follaje en bordes de césped (solo visual)
         // Mecánica de puentes: módulo independiente (mechanics/BridgeSystem.js)
         this.bridgeSystem = new BridgeSystem(this.scene).build(this.data.bridges);
         this._buildDecorations();
         this._buildCollectibles();
         this._buildEnemies();
         this._buildPortal();
+    }
+
+    // ─────────────────────────────
+    // FOLLAJE DE BORDES (solo visual)
+    // ─────────────────────────────
+    // Siembra matas de hierba (y alguna flor/seta) en el borde superior de las
+    // plataformas de CÉSPED, para integrarlas con el entorno. 100% decorativo:
+    // no crea cuerpos de física ni altera colisiones ni el diseño jugable.
+    _buildPlatformFoliage() {
+        const scene = this.scene;
+        const rnd   = new Phaser.Math.RandomDataGenerator(['forest-foliage']);
+
+        (this.data.platforms || []).forEach(p => {
+            if (p.texture !== 'grass') return;
+            const top = p.y - 8;   // superficie del tile (16px, centrado en p.y)
+            for (let x = p.x + 8; x < p.x + p.width - 6; x += rnd.between(28, 46)) {
+                const roll = rnd.frac();
+                let tex = 'grass_tuft';
+                if      (roll < 0.09) tex = rnd.pick(['flower_red', 'flower_yellow']);
+                else if (roll < 0.14) tex = 'mushroom_pair';
+                const img = scene.add.image(x, top + 2, tex)
+                    .setOrigin(0.5, 1).setDepth(6)
+                    .setScale(rnd.realInRange(0.85, 1.15));
+                if (rnd.frac() < 0.5) img.setFlipX(true);
+            }
+        });
     }
 
     // ─────────────────────────────
