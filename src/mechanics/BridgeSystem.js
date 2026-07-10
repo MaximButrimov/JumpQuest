@@ -19,7 +19,7 @@
 //       · fuse      – ms sobre el puente antes de empezar a romperse (def. 1400)
 //       · breakTime – ms de "rotura" antes del derrumbe total (def. 350)
 //
-//  Requisitos de texturas: 'bridge_plank' y 'broken_pillar' (TextureSystem).
+//  Requisitos de texturas: 'bridge_plank' y 'broken_pillar' (StructureTextures).
 // ══════════════════════════════════════════════════════════════
 
 export default class BridgeSystem {

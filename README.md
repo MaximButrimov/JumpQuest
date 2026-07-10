@@ -58,6 +58,16 @@ JumpQuest/
     ├── core/
     │   ├── Player.js           # Lógica del jugador (movimiento, vidas, saltos)
     │   └── Platform.js         # Plataformas estáticas/móviles + detección de superficie
+    ├── textures/               # Módulos de textura por categoría (procedurales)
+    │   ├── textureUtil.js      # Helper compartido: defineTexture(scene, key, w, h, draw)
+    │   ├── index.js            # Registro + buildAllTextures(scene) + re-exports
+    │   ├── TerrainTextures.js  # Tiles de plataforma (césped, piedra, móvil, hielo)
+    │   ├── CollectibleTextures.js # Moneda, estrella
+    │   ├── EnemyTextures.js    # Slime, murciélago
+    │   ├── StructureTextures.js   # Portal (+partícula), puente, pilar, tótem
+    │   ├── VegetationTextures.js  # Árboles, arbustos, helechos, flores, rocas, troncos…
+    │   ├── CaveTextures.js     # Estalactitas, estalagmitas, cristales
+    │   └── SnowTextures.js     # Pino nevado, muñeco de nieve
     ├── mechanics/              # Mecánicas modulares, reutilizables por cualquier nivel
     │   ├── BridgeSystem.js     # Puentes suspendidos temporizados que se derrumban
     │   └── SurfacePhysics.js   # Reglas de fricción por superficie (hielo, normal, …)
@@ -70,8 +80,7 @@ JumpQuest/
     │   ├── Level3.js           # Datos del nivel 1-3 "Puentes Rotos" (agujeros mortales + puentes temporizados)
     │   └── Level4.js           # Datos del nivel 1-4 "Cumbre Helada" (deslizamiento sobre hielo)
     └── systems/
-        ├── BackgroundSystem.js # Fondos parallax por tema ('forest' / 'cave' / 'ruins' / 'snow')
-        └── TextureSystem.js    # Texturas procedurales (moneda, slime, murciélago, portal, estrella, decoraciones)
+        └── BackgroundSystem.js # Fondos parallax por tema ('forest' / 'cave' / 'ruins' / 'snow')
 ```
 
 ---
@@ -118,6 +127,8 @@ Luego abre `http://localhost:8080` en tu navegador.
 
 ### Gráficos
 Todos los assets son **generados proceduralmente** con la API `Graphics` de Phaser 3 — no hay archivos de imagen externos. Las texturas se crean una sola vez con `generateTexture()` y se reutilizan desde la caché de Phaser.
+
+**Arquitectura modular** (`src/textures/`): las texturas se dividen en **módulos por categoría** (`TerrainTextures`, `CollectibleTextures`, `EnemyTextures`, `StructureTextures`, `VegetationTextures`, `CaveTextures`, `SnowTextures`), cada uno con `static build(scene)` y apoyado en el helper compartido `defineTexture()` (sin duplicar boilerplate). El índice `textures/index.js` expone `buildAllTextures(scene)` (construir todo) y re-exporta cada módulo para importarlo suelto donde haga falta. **Añadir una categoría nueva** = crear su archivo `*Textures.js` y sumarlo al registro; no hay que tocar el resto de la arquitectura. Así la gestión de recursos gráficos queda desacoplada de la lógica de cada nivel.
 
 Assets generados: `platform_tile`, `platform_stone`, `platform_moving`, `player_idle` / `player_walk_a` / `player_walk_b` / `player_jump` / `player_fall`, `coin`, `enemy_slime`, `enemy_bat`, `portal`, `powerstar`, `bush`, `totem`, `stalactite`, `stalagmite`, `cave_crystal`, `bridge_plank`, `broken_pillar`, `glow_px`, `particle_px`, y las texturas de fondo por tema (`bg_sky_forest`, `sun_forest`, `hills_far`, `hills_near`, `cloud_forest`, `leaf_px`, `bg_sky_cave`, `cave_wall`, `bg_crystal`, `mote_px`, `cave_vignette`, `bg_sky_ruins`, `sun_ruins`, `ruins_far`, `ruins_near`, `mist_px`, `platform_ice`, `snow_pine`, `snowman`, `bg_sky_snow`, `sun_snow`, `snow_mtn_far`, `snow_hills`, `snow_px`, y la vegetación de bosque (`tree_oak`, `tree_bg`, `bush_lush`, `fern`, `flower_red`, `flower_yellow`, `rock_moss`, `log_moss`, `roots`, `grass_tuft`, `mushroom_pair`, `fg_fern`, `sun_rays`, `forest_farline`, `forest_mid`, `pollen_px`)).
 
@@ -172,7 +183,7 @@ decorations: [
 | `depth` | `4` | Profundidad de render |
 | `flipX`, `scale`, `alpha`, `tint` | — | Modificadores opcionales |
 
-Así, `Level1.js` usa vegetación de bosque en **tres capas** (árboles de fondo en `depth 3`, vegetación de suelo en `depth 6`, helechos de primer plano semitransparentes en `depth 12`) y `Level2.js` usa `stalactite` / `stalagmite` / `cave_crystal` (cueva) sin tocar el código del motor. Para un tema nuevo, basta con generar la textura en `TextureSystem.js` y referenciarla en el `decorations` del nivel.
+Así, `Level1.js` usa vegetación de bosque en **tres capas** (árboles de fondo en `depth 3`, vegetación de suelo en `depth 6`, helechos de primer plano semitransparentes en `depth 12`) y `Level2.js` usa `stalactite` / `stalagmite` / `cave_crystal` (cueva) sin tocar el código del motor. Para un tema nuevo, basta con añadir la textura al módulo de `src/textures/` que corresponda (o crear uno) y referenciarla en el `decorations` del nivel.
 
 Además, `Level._buildPlatformFoliage()` siembra automáticamente **matas de hierba, flores y setas** en el borde superior de las plataformas de `grass` (solo visual, sin física), integrándolas con el entorno. Al depender del `texture` de cada plataforma, cualquier nivel con césped lo obtiene gratis.
 

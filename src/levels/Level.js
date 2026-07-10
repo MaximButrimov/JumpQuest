@@ -1,5 +1,5 @@
 import BackgroundSystem from "../systems/BackgroundSystem.js";
-import TextureSystem from "../systems/TextureSystem.js";
+import { buildAllTextures } from "../textures/index.js";
 import BridgeSystem from "../mechanics/BridgeSystem.js";
 
 export default class Level {
@@ -15,7 +15,6 @@ export default class Level {
 
         // Sistemas
         this.backgroundSystem = new BackgroundSystem(scene);
-        this.textureSystem = new TextureSystem(scene);
 
         this._init();
     }
@@ -23,7 +22,7 @@ export default class Level {
     _init() {
         // 1. Visuals globales — el fondo depende del tema del nivel
         this.backgroundSystem.build(this.data.theme || 'forest');
-        this.textureSystem.build();
+        buildAllTextures(this.scene);   // módulos de textura (src/textures/)
 
         // 2. Construcción del nivel (depende de data)
         this._buildPlatforms();
@@ -313,7 +312,7 @@ export default class Level {
             ease:     'Sine.easeInOut'
         });
 
-        // Partículas del portal (requiere 'glow_px' generada en TextureSystem)
+        // Partículas del portal (requiere 'glow_px' generada en StructureTextures)
         this.portalEmitter = scene.add.particles(
             this.data.exit.x, this.data.exit.y,
             'glow_px',

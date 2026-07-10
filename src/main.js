@@ -3,7 +3,7 @@ import Player from './core/Player.js';
 import Level from './levels/Level.js';
 import Level1Data from './levels/Level1.js';
 import MapScene from './map/MapScene.js';
-import TextureSystem from './systems/TextureSystem.js';
+import { buildAllTextures } from './textures/index.js';
 
 /**
  * ============================================================
@@ -151,10 +151,9 @@ class MenuScene extends Phaser.Scene {
   create() {
     const { width: W, height: H } = this.scale;
 
-    // Texturas compartidas necesarias para el diorama (personaje + props + plataformas)
+    // Texturas compartidas necesarias para el diorama (personaje + props + terreno)
     Player.buildFrames(this);
-    new TextureSystem(this).build();
-    PlatformManager.buildTextures(this);
+    buildAllTextures(this);   // incluye el terreno (plataformas)
 
     this._buildBackdrop(W, H);
     this._buildDiorama(W, H);
