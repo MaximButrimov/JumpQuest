@@ -451,30 +451,120 @@ export default class BackgroundSystem {
             [1.0,  0x1c1030],
         ]);
 
-        // ── Muro rocoso tileado (parallax leve) ───────────────
-        if (!scene.textures.exists('cave_wall')) {
+        // ── Silueta de caverna MUY lejana (suelo y techo) ─────
+        // Da la sensación de un gran vacío rocoso a nuestro alrededor.
+        if (!scene.textures.exists('cave_far')) {
             const g = scene.make.graphics({ add: false });
-            g.fillStyle(0x160f28); g.fillRect(0, 0, 128, 128);
-            // Bloques de roca con relieve (RNG local para no reseedear el global)
-            const rnd = new Phaser.Math.RandomDataGenerator(['cave']);
-            for (let by = 0; by < 128; by += 32) {
-                for (let bx = 0; bx < 128; bx += 32) {
-                    const off = (by / 32) % 2 === 0 ? 0 : 16;
-                    const x = (bx + off) % 128;
-                    const shade = rnd.pick([0x1d1436, 0x231843, 0x120c22]);
-                    g.fillStyle(shade); g.fillRect(x + 1, by + 1, 30, 30);
-                    g.fillStyle(0x2c1e52, 0.6); g.fillRect(x + 1, by + 1, 30, 2);
-                    g.fillStyle(0x0c081a, 0.7); g.fillRect(x + 1, by + 29, 30, 2);
-                }
-            }
-            g.generateTexture('cave_wall', 128, 128);
+            g.fillStyle(0x0a0714, 1);
+            g.fillEllipse(120, 240, 380, 210);   // montículos de roca inferiores
+            g.fillEllipse(430, 240, 460, 250);
+            g.fillEllipse(720, 240, 400, 210);
+            g.generateTexture('cave_far', 800, 240);
             g.destroy();
         }
+        if (!scene.textures.exists('cave_ceiling')) {
+            const g = scene.make.graphics({ add: false });
+            g.fillStyle(0x0a0714, 1);
+            g.fillEllipse(160, 0, 340, 180);      // roca descendiendo del techo
+            g.fillEllipse(470, 0, 420, 210);
+            g.fillEllipse(760, 0, 360, 160);
+            g.generateTexture('cave_ceiling', 800, 180);
+            g.destroy();
+        }
+        for (let i = 0; i < Math.ceil(W / 800) + 1; i++) {
+            scene.add.image(i * 800, H, 'cave_far')
+                .setOrigin(0, 1).setScrollFactor(0.15).setDepth(0).setAlpha(0.9);
+            scene.add.image(i * 800, 0, 'cave_ceiling')
+                .setOrigin(0, 0).setScrollFactor(0.15).setDepth(0).setAlpha(0.9);
+        }
+
+        // ── Muro de roca ORGÁNICA tileado (parallax leve) ─────
+        // 3 variantes irregulares repartidas al azar por tile → nada de rejilla
+        // de ladrillos: bultos de roca, fisuras angulares y motas minerales.
+        const WALL_VARIANTS = 3;
+        if (!scene.textures.exists('cave_wall_0')) {
+            for (let v = 0; v < WALL_VARIANTS; v++) {
+                const g = scene.make.graphics({ add: false });
+                const rnd = new Phaser.Math.RandomDataGenerator(['cave-rock-' + v]);
+                g.fillStyle(0x160f28); g.fillRect(0, 0, 128, 128);
+                // Bultos de roca irregulares (tonos oscuros variados)
+                for (let i = 0; i < 16; i++) {
+                    g.fillStyle(rnd.pick([0x1d1436, 0x231843, 0x1a1030, 0x271a4a]), 1);
+                    g.fillEllipse(rnd.between(0, 128), rnd.between(0, 128), rnd.between(26, 58), rnd.between(20, 46));
+                }
+                // Realces tenues (relieve superior)
+                for (let i = 0; i < 9; i++) {
+                    g.fillStyle(0x2c1e52, 0.4);
+                    g.fillEllipse(rnd.between(0, 128), rnd.between(0, 128), rnd.between(14, 32), rnd.between(10, 22));
+                }
+                // Fisuras angulares (trazos escalonados)
+                g.fillStyle(0x0b0716, 0.85);
+                for (let i = 0; i < 6; i++) {
+                    let x = rnd.between(12, 116), y = rnd.between(2, 40);
+                    const seg = rnd.between(3, 6);
+                    for (let s = 0; s < seg; s++) {
+                        g.fillRect(x, y, 2, rnd.between(7, 13));
+                        x += rnd.between(-5, 5); y += rnd.between(9, 15);
+                    }
+                }
+                // Motas minerales y bioluminiscencia tenue
+                for (let i = 0; i < 46; i++) {
+                    g.fillStyle(rnd.pick([0x2c1e52, 0x0c081a, 0x39d0ff, 0x50f5c0]), rnd.pick([0.5, 0.3, 0.14]));
+                    g.fillRect(rnd.between(0, 127), rnd.between(0, 127), 1, 1);
+                }
+                g.generateTexture('cave_wall_' + v, 128, 128);
+                g.destroy();
+            }
+        }
+        const wallRnd = new Phaser.Math.RandomDataGenerator(['cave-wall-layout']);
         for (let cy = 0; cy < H; cy += 128) {
             for (let cx = 0; cx < W; cx += 128) {
-                scene.add.image(cx, cy, 'cave_wall')
-                    .setOrigin(0, 0).setScrollFactor(0.35).setDepth(0).setAlpha(0.9);
+                scene.add.image(cx, cy, 'cave_wall_' + wallRnd.between(0, WALL_VARIANTS - 1))
+                    .setOrigin(0, 0).setScrollFactor(0.35).setDepth(0).setAlpha(0.8);
             }
+        }
+
+        // ── Agujas de roca de plano medio (parallax) ──────────
+        if (!scene.textures.exists('cave_spires')) {
+            const g = scene.make.graphics({ add: false });
+            const rnd = new Phaser.Math.RandomDataGenerator(['cave-spires']);
+            g.fillStyle(0x140d24, 1);
+            g.fillRect(0, 200, 800, 60);   // base sólida (rellena la franja del suelo, sin huecos)
+            for (const sx of [70, 210, 360, 510, 660, 790]) {
+                g.fillTriangle(sx - 34, 200, sx + 34, 200, sx, 200 - rnd.between(120, 210));
+            }
+            g.generateTexture('cave_spires', 800, 260);
+            g.destroy();
+        }
+        for (let i = 0; i < Math.ceil(W / 800) + 1; i++) {
+            scene.add.image(i * 800, H, 'cave_spires')
+                .setOrigin(0, 1).setScrollFactor(0.28).setDepth(1).setAlpha(0.85);
+        }
+
+        // ── Charcos de luz bioluminiscente (ambiente, ADD) ────
+        // Manchas de color que "iluminan" el fondo cerca de vetas de cristal.
+        if (!scene.textures.exists('cave_glow')) {
+            const g = scene.make.graphics({ add: false });
+            for (let r = 64; r > 0; r -= 3) {
+                g.fillStyle(0xffffff, 0.006 + 0.014 * (1 - r / 64));
+                g.fillCircle(64, 64, r);
+            }
+            g.generateTexture('cave_glow', 128, 128);
+            g.destroy();
+        }
+        for (let i = 0; i < 9; i++) {
+            const gx   = (i + 0.5) * (W / 9) + Phaser.Math.Between(-120, 120);
+            const gy   = Phaser.Math.Between(H * 0.35, H * 0.8);
+            const tint = Phaser.Math.RND.pick([0x2a80c0, 0x6030a0, 0x209070]);
+            const pool = scene.add.image(gx, gy, 'cave_glow')
+                .setScrollFactor(0.4).setDepth(1).setBlendMode(Phaser.BlendModes.ADD)
+                .setTint(tint).setScale(Phaser.Math.FloatBetween(1.4, 2.6)).setAlpha(0.5);
+            scene.tweens.add({
+                targets: pool, alpha: 0.28,
+                duration: Phaser.Math.Between(2200, 4200),
+                yoyo: true, repeat: -1, delay: Phaser.Math.Between(0, 2000),
+                ease: 'Sine.easeInOut'
+            });
         }
 
         // ── Cristales luminiscentes de fondo ──────────────────
@@ -510,6 +600,36 @@ export default class BackgroundSystem {
             });
         }
 
+        // ── Rayos de luz tenues desde el techo (god rays, ADD) ─
+        if (!scene.textures.exists('cave_shaft')) {
+            const g = scene.make.graphics({ add: false });
+            for (const sx of [VW * 0.22, VW * 0.56, VW * 0.82]) {
+                g.fillStyle(0x9fd8ff, 0.05);
+                g.fillTriangle(sx - 7, 0, sx + 7, 0, sx - 55, VH);
+                g.fillTriangle(sx + 7, 0, sx - 55, VH, sx + 55, VH);
+            }
+            g.generateTexture('cave_shaft', VW, VH);
+            g.destroy();
+        }
+        const shafts = scene.add.image(VW / 2, VH / 2, 'cave_shaft')
+            .setScrollFactor(0).setDepth(1).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.5);
+        scene.tweens.add({ targets: shafts, alpha: 0.85, duration: 5000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+
+        // ── Niebla baja húmeda (ambiente, a la deriva) ────────
+        this._pixel('cave_fog_px', 0xffffff, 6);
+        const fog = scene.add.particles(0, 0, 'cave_fog_px', {
+            x: { min: 0, max: VW },
+            y: { min: VH * 0.55, max: VH },
+            speedX: { min: 3, max: 14 },
+            speedY: { min: -3, max: 3 },
+            scale:  { min: 2, max: 5 },
+            lifespan: 9000,
+            frequency: 600,
+            alpha: { min: 0.03, max: 0.10 },
+            tint: [0x2a4a6a, 0x3a5a7a, 0x203040],
+        });
+        fog.setScrollFactor(0).setDepth(3);
+
         // ── Motas de polvo flotante (ambiente) ────────────────
         this._pixel('mote_px', 0xffffff, 4);
         const motes = scene.add.particles(0, VH + 10, 'mote_px', {
@@ -524,6 +644,21 @@ export default class BackgroundSystem {
             blendMode: 'ADD',
         });
         motes.setScrollFactor(0).setDepth(3);
+
+        // ── Goteo de agua desde el techo (ambiente) ───────────
+        this._pixel('drip_px', 0xffffff, 3);
+        const drips = scene.add.particles(0, -6, 'drip_px', {
+            x: { min: 0, max: VW },
+            speedY: { min: 60, max: 120 },
+            speedX: { min: -2, max: 2 },
+            gravityY: 140,
+            scale:  { min: 0.6, max: 1.2 },
+            lifespan: 3600,
+            frequency: 850,
+            alpha: { min: 0.3, max: 0.7 },
+            tint: [0x7fc8e8, 0xbff4ff],
+        });
+        drips.setScrollFactor(0).setDepth(3);
 
         // ── Viñeta oscura en los bordes (profundidad de cueva) ─
         // Textura MULTIPLY: centro claro (sin cambio), bordes oscuros.

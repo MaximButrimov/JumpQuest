@@ -185,7 +185,7 @@ decorations: [
 
 Así, `Level1.js` usa vegetación de bosque en **tres capas** (árboles de fondo en `depth 3`, vegetación de suelo en `depth 6`, helechos de primer plano semitransparentes en `depth 12`) y `Level2.js` usa `stalactite` / `stalagmite` / `cave_crystal` (cueva) sin tocar el código del motor. Para un tema nuevo, basta con añadir la textura al módulo de `src/textures/` que corresponda (o crear uno) y referenciarla en el `decorations` del nivel.
 
-Además, `Level._buildPlatformFoliage()` siembra automáticamente **matas de hierba, flores y setas** en el borde superior de las plataformas de `grass` (solo visual, sin física), integrándolas con el entorno. Al depender del `texture` de cada plataforma, cualquier nivel con césped lo obtiene gratis.
+Además, `Level._buildSurfaceScatter()` siembra automáticamente **matas en el borde superior de las plataformas según su tipo de terreno** (solo visual, sin física), integrándolas con el entorno. La config vive en `Level.SCATTER` (p. ej. `grass` → hierba/flores/setas; `stone` → musgo/hongos luminosos/cristales); añadir un bioma es añadir una entrada, sin tocar la lógica. Al depender del `texture` de cada plataforma, cualquier nivel lo obtiene gratis.
 
 ### Mecánicas modulares (`src/mechanics/`)
 Cada mecánica del juego se implementa como un **módulo independiente** en `src/mechanics/`, encapsulando solo su lógica. Ni los niveles ni el controlador del jugador contienen la lógica de una mecánica concreta: la **importan** y **la invocan**. Esto mantiene una separación clara de responsabilidades y permite reutilizar cualquier mecánica en varios niveles sin duplicar código.

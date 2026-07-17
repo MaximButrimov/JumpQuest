@@ -15,6 +15,11 @@
 import TerrainTextures from '../textures/TerrainTextures.js';
 
 class PlatformManager {
+  // Mapeo tipo de superficie (dato del nivel) → clave de textura procedimental.
+  // Centralizado para que la superficie del suelo y su relleno inferior
+  // compartan la misma temática:  forest→grass · cave/ruins→stone · snow→ice.
+  static SURFACE_TEX = { stone: 'platform_stone', ice: 'platform_ice', grass: 'platform_tile' };
+
   /** @param {Phaser.Scene} scene */
   constructor(scene) {
     this.scene = scene;
@@ -58,8 +63,7 @@ class PlatformManager {
    * @returns {Phaser.GameObjects.Image[]}
    */
   createStatic(x, y, width, type = 'grass') {
-    const TEX = { stone: 'platform_stone', ice: 'platform_ice', grass: 'platform_tile' };
-    const texKey  = TEX[type] || 'platform_tile';
+    const texKey  = PlatformManager.SURFACE_TEX[type] || 'platform_tile';
     // Tipo de superficie para la física (fricción). 'ice' → deslizante.
     const surface = (type === 'ice') ? 'ice' : 'normal';
     const tileW  = 32;
@@ -187,12 +191,14 @@ class PlatformManager {
   }
 
   /**
-   * Rellena visualmente con tiles de piedra desde groundY+1 tile hasta el
-   * límite inferior del mundo. Si se pasan `segments` (los tramos de suelo),
-   * SOLO rellena bajo ellos, dejando vacíos los huecos/agujeros del nivel.
-   * Sin `segments` rellena todo el ancho (comportamiento clásico).
+   * Rellena visualmente el hueco entre la superficie del suelo y el límite
+   * inferior del mundo. La textura del relleno se toma de CADA tramo de suelo
+   * (`segment.texture`), de modo que el sub-suelo hereda la temática del nivel
+   * (forest→grass · cave/ruins→stone · snow→ice) en lugar de ser siempre piedra.
+   * Si se pasan `segments`, SOLO rellena bajo ellos (deja vacíos los agujeros
+   * mortales); sin `segments` rellena todo el ancho con piedra (respaldo clásico).
    * @param {number} groundY – Y del tile de suelo superior (centro del tile)
-   * @param {Array<{x:number,width:number}>} [segments] – tramos de suelo sólido
+   * @param {Array<{x:number,width:number,texture?:string}>} [segments] – tramos de suelo sólido
    */
   fillGroundBottom(groundY, segments = null) {
     const bounds = this.scene.physics.world.bounds;
@@ -202,11 +208,11 @@ class PlatformManager {
     // Rellena una columna vertical de tiles bajo un tramo, tileando desde
     // `leftX` igual que createStatic → las filas inferiores quedan alineadas
     // con la fila superior del suelo (sin píxeles desalineados).
-    const fillUnder = (leftX, count) => {
+    const fillUnder = (leftX, count, texKey) => {
       for (let row = 1; groundY + row * tileH <= bounds.height + tileH; row++) {
         const y = groundY + row * tileH;
         for (let i = 0; i < count; i++) {
-          const tile = this.staticGroup.create(leftX + i * tileW + tileW / 2, y, 'platform_stone');
+          const tile = this.staticGroup.create(leftX + i * tileW + tileW / 2, y, texKey);
           tile.refreshBody();
           tile.setDepth(5);
         }
@@ -214,11 +220,14 @@ class PlatformManager {
     };
 
     if (segments) {
-      // Solo bajo los tramos reales → deja el vacío bajo los agujeros
-      for (const s of segments) fillUnder(s.x, Math.max(1, Math.floor(s.width / tileW)));
+      // Bajo cada tramo real, con SU textura → deja el vacío bajo los agujeros
+      for (const s of segments) {
+        const texKey = PlatformManager.SURFACE_TEX[s.texture] || 'platform_tile';
+        fillUnder(s.x, Math.max(1, Math.floor(s.width / tileW)), texKey);
+      }
     } else {
-      // Todo el ancho (comportamiento clásico)
-      fillUnder(0, Math.ceil(bounds.width / tileW));
+      // Todo el ancho, piedra (comportamiento clásico de respaldo)
+      fillUnder(0, Math.ceil(bounds.width / tileW), 'platform_stone');
     }
   }
 }

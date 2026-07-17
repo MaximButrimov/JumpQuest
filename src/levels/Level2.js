@@ -5,43 +5,88 @@ export default {
     // ── Tema visual (fondo) ───────────────────────────────
     theme: 'cave',
 
-    // ── Decoraciones (cueva) ──────────────────────────────
+    // ── Decoraciones (cueva, por capas de profundidad) ────────
+    //  depth 2  → rocas/ruinas lejanas (detrás de las plataformas, tenues)
+    //  depth 4  → techo: estalactitas y lianas colgantes
+    //  depth 5-6→ suelo: charcos, estalagmitas, rocas, hongos, cristales
+    //  depth 12 → primer plano que enmarca (semitransparente, no tapa el suelo)
+    //  Todo es puramente visual: no afecta a plataformas ni colisiones.
     decorations: [
-        // Estalactitas colgando del techo (y: 0, originY: 0)
+        // ══ FONDO (depth 3) — rocas y columnas antiguas, apoyadas en el suelo ══
+        // Receden por OSCURIDAD (tinte), no por transparencia (opacas = sólidas).
+        { texture: 'cave_boulder', x: 240,  depth: 3, scale: 1.8, tint: 0x4d4a66 },
+        { texture: 'cave_pillar',  x: 560,  depth: 3, scale: 1.3, tint: 0x4d4a66 },
+        { texture: 'cave_boulder', x: 1180, depth: 3, scale: 1.9, tint: 0x4d4a66, flipX: true },
+        { texture: 'cave_boulder', x: 1950, depth: 3, scale: 1.6, tint: 0x4d4a66 },
+        { texture: 'cave_pillar',  x: 2600, depth: 3, scale: 1.5, tint: 0x4d4a66, flipX: true },
+        { texture: 'cave_boulder', x: 3350, depth: 3, scale: 1.8, tint: 0x4d4a66 },
+        { texture: 'cave_boulder', x: 4150, depth: 3, scale: 1.9, tint: 0x4d4a66, flipX: true },
+        { texture: 'cave_pillar',  x: 4950, depth: 3, scale: 1.4, tint: 0x4d4a66 },
+        { texture: 'cave_boulder', x: 5400, depth: 3, scale: 1.8, tint: 0x4d4a66 },
+
+        // ══ TECHO (depth 4) — estalactitas + lianas/raíces colgantes ══
         { texture: 'stalactite', x: 160,  y: 0, originY: 0, scale: 1.1 },
+        { texture: 'cave_vine',  x: 300,  y: 0, originY: 0, scale: 1.0 },
         { texture: 'stalactite', x: 430,  y: 0, originY: 0, scale: 0.8 },
         { texture: 'stalactite', x: 720,  y: 0, originY: 0, scale: 1.3 },
+        { texture: 'cave_vine',  x: 880,  y: 0, originY: 0, scale: 0.85, flipX: true },
         { texture: 'stalactite', x: 1040, y: 0, originY: 0, scale: 0.9 },
         { texture: 'stalactite', x: 1380, y: 0, originY: 0, scale: 1.2 },
+        { texture: 'cave_vine',  x: 1520, y: 0, originY: 0, scale: 1.1 },
         { texture: 'stalactite', x: 1720, y: 0, originY: 0, scale: 0.85 },
         { texture: 'stalactite', x: 2080, y: 0, originY: 0, scale: 1.15 },
+        { texture: 'cave_vine',  x: 2260, y: 0, originY: 0, scale: 0.9 },
         { texture: 'stalactite', x: 2480, y: 0, originY: 0, scale: 1.0  },
         { texture: 'stalactite', x: 2880, y: 0, originY: 0, scale: 1.3  },
+        { texture: 'cave_vine',  x: 3060, y: 0, originY: 0, scale: 1.0, flipX: true },
         { texture: 'stalactite', x: 3280, y: 0, originY: 0, scale: 0.9  },
         { texture: 'stalactite', x: 3680, y: 0, originY: 0, scale: 1.1  },
+        { texture: 'cave_vine',  x: 3860, y: 0, originY: 0, scale: 0.95 },
         { texture: 'stalactite', x: 4080, y: 0, originY: 0, scale: 1.25 },
         { texture: 'stalactite', x: 4480, y: 0, originY: 0, scale: 0.9  },
+        { texture: 'cave_vine',  x: 4660, y: 0, originY: 0, scale: 1.05, flipX: true },
         { texture: 'stalactite', x: 4900, y: 0, originY: 0, scale: 1.2  },
         { texture: 'stalactite', x: 5320, y: 0, originY: 0, scale: 1.0  },
 
-        // Estalagmitas sobre el suelo (y por defecto = 752)
-        { texture: 'stalagmite', x: 350  },
-        { texture: 'stalagmite', x: 900,  scale: 1.2 },
-        { texture: 'stalagmite', x: 1600 },
-        { texture: 'stalagmite', x: 2300, scale: 1.3 },
-        { texture: 'stalagmite', x: 3100 },
-        { texture: 'stalagmite', x: 3900, scale: 1.2 },
-        { texture: 'stalagmite', x: 4700 },
-        { texture: 'stalagmite', x: 5250, scale: 1.1 },
+        // ══ SUELO (depth 5-6) — humedad, roca, hongos y cristales ══
+        // Charcos (depth 5: bajo el resto de props del suelo)
+        { texture: 'cave_puddle', x: 520,  depth: 5, scale: 1.1 },
+        { texture: 'cave_puddle', x: 1150, depth: 5, scale: 1.3 },
+        { texture: 'cave_puddle', x: 2500, depth: 5, scale: 1.2 },
+        { texture: 'cave_puddle', x: 3900, depth: 5, scale: 1.15 },
+        { texture: 'cave_puddle', x: 5000, depth: 5, scale: 1.25 },
 
-        // Cristales brillantes decorando el suelo
-        { texture: 'cave_crystal', x: 600  },
-        { texture: 'cave_crystal', x: 1250, flipX: true },
-        { texture: 'cave_crystal', x: 2000 },
-        { texture: 'cave_crystal', x: 2750, flipX: true },
-        { texture: 'cave_crystal', x: 3500 },
-        { texture: 'cave_crystal', x: 4300, flipX: true },
-        { texture: 'cave_crystal', x: 5100 },
+        // Estalagmitas y rocas de suelo (depth 6)
+        { texture: 'stalagmite',   x: 350,  depth: 6 },
+        { texture: 'cave_boulder', x: 430,  depth: 6, scale: 0.9, flipX: true },
+        { texture: 'stalagmite',   x: 900,  depth: 6, scale: 1.2 },
+        { texture: 'cave_boulder', x: 1600, depth: 6, scale: 1.1 },
+        { texture: 'stalagmite',   x: 2300, depth: 6, scale: 1.3 },
+        { texture: 'cave_boulder', x: 3100, depth: 6, scale: 1.0, flipX: true },
+        { texture: 'stalagmite',   x: 3900, depth: 6, scale: 1.2 },
+        { texture: 'cave_boulder', x: 4700, depth: 6, scale: 1.15 },
+        { texture: 'stalagmite',   x: 5250, depth: 6, scale: 1.1 },
+
+        // Hongos y racimos de cristal bioluminiscentes (glow + latido)
+        { texture: 'crystal_cluster', x: 250,  depth: 6, scale: 0.9, blendMode: 'ADD', pulse: true },
+        { texture: 'glow_mushroom',   x: 600,  depth: 6, scale: 1.1, blendMode: 'ADD', pulse: true },
+        { texture: 'glow_mushroom',   x: 1250, depth: 6, scale: 0.9, blendMode: 'ADD', pulse: true },
+        { texture: 'crystal_cluster', x: 2000, depth: 6, scale: 1.0, blendMode: 'ADD', pulse: true },
+        { texture: 'glow_mushroom',   x: 2750, depth: 6, scale: 1.0, blendMode: 'ADD', pulse: true, flipX: true },
+        { texture: 'crystal_cluster', x: 3500, depth: 6, scale: 1.1, blendMode: 'ADD', pulse: true },
+        { texture: 'glow_mushroom',   x: 4300, depth: 6, scale: 1.0, blendMode: 'ADD', pulse: true },
+        { texture: 'crystal_cluster', x: 5100, depth: 6, scale: 0.95, blendMode: 'ADD', pulse: true },
+
+        // ══ PRIMER PLANO (depth 12) — enmarca desde el techo sin tapar el suelo ══
+        // Siluetas colgantes semitransparentes (uniforme 0.8), como los helechos
+        // del bosque; los racimos usan glow aditivo (translucidez intencionada).
+        { texture: 'stalactite',      x: 480,  y: 0, originY: 0, depth: 12, scale: 2.4, alpha: 0.8, tint: 0x1a1530 },
+        { texture: 'cave_vine',       x: 900,  y: 0, originY: 0, depth: 12, scale: 1.6, alpha: 0.8 },
+        { texture: 'crystal_cluster', x: 1780, depth: 12, scale: 1.2, blendMode: 'ADD', pulse: true },
+        { texture: 'stalactite',      x: 2600, y: 0, originY: 0, depth: 12, scale: 2.6, alpha: 0.8, tint: 0x1a1530, flipX: true },
+        { texture: 'cave_vine',       x: 3400, y: 0, originY: 0, depth: 12, scale: 1.7, alpha: 0.8 },
+        { texture: 'crystal_cluster', x: 4250, depth: 12, scale: 1.1, blendMode: 'ADD', pulse: true },
+        { texture: 'stalactite',      x: 5050, y: 0, originY: 0, depth: 12, scale: 2.3, alpha: 0.8, tint: 0x1a1530 },
     ],
 
     platforms: [

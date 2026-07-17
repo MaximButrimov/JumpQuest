@@ -3,6 +3,35 @@ import { buildAllTextures } from "../textures/index.js";
 import BridgeSystem from "../mechanics/BridgeSystem.js";
 
 export default class Level {
+    // ─────────────────────────────────────────────────────────
+    //  DISPERSIÓN DE SUPERFICIE (config por tipo de terreno)
+    // ─────────────────────────────────────────────────────────
+    // Cada bioma declara qué "matas" siembra sobre el borde superior de sus
+    // plataformas. 100% visual: no crea cuerpos de física ni altera colisiones.
+    // Añadir un bioma nuevo = añadir una entrada aquí (sin tocar la lógica).
+    static SCATTER = {
+        // Bosque: matas de hierba con alguna flor/seta.
+        grass: {
+            seed: 'forest-foliage', step: [28, 46], scale: [0.85, 1.15], depth: 6,
+            pick: (rnd) => {
+                const roll = rnd.frac();
+                if (roll < 0.09) return rnd.pick(['flower_red', 'flower_yellow']);
+                if (roll < 0.14) return 'mushroom_pair';
+                return 'grass_tuft';
+            },
+        },
+        // Cueva: musgo con motas, algún hongo luminoso y cristal disperso.
+        stone: {
+            seed: 'cave-scatter', step: [40, 74], scale: [0.7, 1.05], depth: 6,
+            pick: (rnd) => {
+                const roll = rnd.frac();
+                if (roll < 0.12) return 'glow_mushroom';
+                if (roll < 0.22) return 'cave_crystal';
+                return 'moss_patch';
+            },
+        },
+    };
+
     constructor(scene, platformManager, data) {
         this.scene = scene;
         this.platformManager = platformManager;
@@ -26,7 +55,7 @@ export default class Level {
 
         // 2. Construcción del nivel (depende de data)
         this._buildPlatforms();
-        this._buildPlatformFoliage();   // follaje en bordes de césped (solo visual)
+        this._buildSurfaceScatter();     // matas en bordes de plataforma según bioma (solo visual)
         // Mecánica de puentes: módulo independiente (mechanics/BridgeSystem.js)
         this.bridgeSystem = new BridgeSystem(this.scene).build(this.data.bridges);
         this._buildDecorations();
@@ -36,29 +65,30 @@ export default class Level {
     }
 
     // ─────────────────────────────
-    // FOLLAJE DE BORDES (solo visual)
+    // DISPERSIÓN DE BORDES (solo visual)
     // ─────────────────────────────
-    // Siembra matas de hierba (y alguna flor/seta) en el borde superior de las
-    // plataformas de CÉSPED, para integrarlas con el entorno. 100% decorativo:
-    // no crea cuerpos de física ni altera colisiones ni el diseño jugable.
-    _buildPlatformFoliage() {
+    // Siembra matas sobre el borde superior de cada plataforma según su tipo
+    // de terreno (ver Level.SCATTER). Genérico y reutilizable por cualquier
+    // bioma. 100% decorativo: no crea cuerpos de física ni altera colisiones.
+    _buildSurfaceScatter() {
         const scene = this.scene;
-        const rnd   = new Phaser.Math.RandomDataGenerator(['forest-foliage']);
+        const platforms = this.data.platforms || [];
 
-        (this.data.platforms || []).forEach(p => {
-            if (p.texture !== 'grass') return;
-            const top = p.y - 8;   // superficie del tile (16px, centrado en p.y)
-            for (let x = p.x + 8; x < p.x + p.width - 6; x += rnd.between(28, 46)) {
-                const roll = rnd.frac();
-                let tex = 'grass_tuft';
-                if      (roll < 0.09) tex = rnd.pick(['flower_red', 'flower_yellow']);
-                else if (roll < 0.14) tex = 'mushroom_pair';
-                const img = scene.add.image(x, top + 2, tex)
-                    .setOrigin(0.5, 1).setDepth(6)
-                    .setScale(rnd.realInRange(0.85, 1.15));
-                if (rnd.frac() < 0.5) img.setFlipX(true);
+        for (const [type, cfg] of Object.entries(Level.SCATTER)) {
+            const surfaces = platforms.filter(p => p.texture === type);
+            if (surfaces.length === 0) continue;
+
+            const rnd = new Phaser.Math.RandomDataGenerator([cfg.seed]);
+            for (const p of surfaces) {
+                const top = p.y - 8;   // superficie del tile (16px, centrado en p.y)
+                for (let x = p.x + 8; x < p.x + p.width - 6; x += rnd.between(cfg.step[0], cfg.step[1])) {
+                    const img = scene.add.image(x, top + 2, cfg.pick(rnd))
+                        .setOrigin(0.5, 1).setDepth(cfg.depth)
+                        .setScale(rnd.realInRange(cfg.scale[0], cfg.scale[1]));
+                    if (rnd.frac() < 0.5) img.setFlipX(true);
+                }
             }
-        });
+        }
     }
 
     // ─────────────────────────────
@@ -93,9 +123,10 @@ export default class Level {
     //   { texture, x, y=GROUND_Y, originX=0.5, originY=1, depth=4,
     //     flipX?, scale?, alpha?, tint? }
     // Para adornos colgados del techo usa y: 0, originY: 0 (ej. estalactitas).
+    // Extras opcionales: blendMode ('ADD' para glow) y pulse (latido de luz).
     _buildDecorations() {
         const scene   = this.scene;
-        const GROUND_Y = 752;
+        const GROUND_Y = 744;   // superficie del suelo (tile de 16px centrado en 752)
 
         const decorations = this.data.decorations || [];
         for (const d of decorations) {
@@ -107,6 +138,20 @@ export default class Level {
             if (d.scale != null)  img.setScale(d.scale);
             if (d.alpha != null)  img.setAlpha(d.alpha);
             if (d.tint != null)   img.setTint(d.tint);
+            if (d.blendMode)      img.setBlendMode(Phaser.BlendModes[d.blendMode] ?? d.blendMode);
+
+            // Latido suave para elementos luminosos (cristales, hongos).
+            if (d.pulse) {
+                scene.tweens.add({
+                    targets:  img,
+                    alpha:    (d.alpha ?? 1) * 0.55,
+                    duration: Phaser.Math.Between(1600, 2800),
+                    yoyo:     true,
+                    repeat:   -1,
+                    delay:    Phaser.Math.Between(0, 1500),
+                    ease:     'Sine.easeInOut'
+                });
+            }
         }
     }
 
