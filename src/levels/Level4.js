@@ -14,16 +14,19 @@ export default {
     worldWidth: 5600,
     theme: 'snow',
 
-    // ── Tramos de suelo (y=752). Casi todo HIELO; huecos = vacío mortal ──
-    platforms: [
-        { x: 0,    y: 752, width: 1500, texture: 'ice' },   // G1  0..1500
-        // AGUJERO 1: 1500..1650
-        { x: 1650, y: 752, width: 950,  texture: 'ice' },   // G2  1650..2600
-        // AGUJERO 2: 2600..2750
-        { x: 2750, y: 752, width: 1150, texture: 'ice' },   // G3  2750..3900
-        // AGUJERO 3: 3900..4050
-        { x: 4050, y: 752, width: 1550, texture: 'ice' },   // G4  4050..5600
+    // ── Suelo de HIELO por TRAMOS (bloques sólidos; huecos = vacío mortal) ──
+    ground: {
+        texture: 'ice',
+        segments: [
+            { x: 0,    width: 1500 }, // G1  0..1500
+            { x: 1650, width: 950  }, // G2  1650..2600   (AGUJERO 1: 1500..1650)
+            { x: 2750, width: 1150 }, // G3  2750..3900   (AGUJERO 2: 2600..2750)
+            { x: 4050, width: 1550 }, // G4  4050..5600   (AGUJERO 3: 3900..4050)
+        ],
+    },
 
+    // ── Plataformas elevadas (hielo deslizante / piedra de agarre) ──
+    platforms: [
         // ── Sección 1 — pista de hielo introductoria (0..1500) ──
         { x: 400,  y: 660, width: 128, texture: 'ice'   },
         { x: 700,  y: 580, width: 128, texture: 'ice'   },

@@ -15,10 +15,14 @@
 import TerrainTextures from '../textures/TerrainTextures.js';
 
 class PlatformManager {
-  // Mapeo tipo de superficie (dato del nivel) → clave de textura procedimental.
-  // Centralizado para que la superficie del suelo y su relleno inferior
-  // compartan la misma temática:  forest→grass · cave/ruins→stone · snow→ice.
+  // Mapeo tipo de superficie (dato del nivel) → clave de textura de tile.
+  // Lo usan las plataformas (createStatic):  grass · stone · ice.
   static SURFACE_TEX = { stone: 'platform_stone', ice: 'platform_ice', grass: 'platform_tile' };
+
+  // Mapeo tipo de terreno → textura de BLOQUE de suelo (superficie + cuerpo
+  // macizo). Lo usa createGround(). Añadir un bioma = añadir una entrada aquí
+  // (y su textura ground_X en TerrainTextures). Totalmente escalable.
+  static GROUND_TEX = { grass: 'ground_grass', stone: 'ground_stone', ice: 'ground_ice' };
 
   /** @param {Phaser.Scene} scene */
   constructor(scene) {
@@ -190,44 +194,52 @@ class PlatformManager {
     this.scene.physics.add.collider(enemyGroup, this.movingGroup);
   }
 
+  // ─────────────────────────────────────────────────────────
+  //  SUELO (bloques sólidos, no sucesión de tiles)
+  // ─────────────────────────────────────────────────────────
+
   /**
-   * Rellena visualmente el hueco entre la superficie del suelo y el límite
-   * inferior del mundo. La textura del relleno se toma de CADA tramo de suelo
-   * (`segment.texture`), de modo que el sub-suelo hereda la temática del nivel
-   * (forest→grass · cave/ruins→stone · snow→ice) en lugar de ser siempre piedra.
-   * Si se pasan `segments`, SOLO rellena bajo ellos (deja vacíos los agujeros
-   * mortales); sin `segments` rellena todo el ancho con piedra (respaldo clásico).
-   * @param {number} groundY – Y del tile de suelo superior (centro del tile)
-   * @param {Array<{x:number,width:number,texture?:string}>} [segments] – tramos de suelo sólido
+   * Construye el SUELO del nivel como BLOQUES sólidos, uno por tramo, en vez de
+   * una sucesión de tiles. Cada tramo = 1 TileSprite visual (superficie arriba +
+   * cuerpo macizo hacia abajo, sin franjas repetidas) + 1 cuerpo estático de
+   * colisión. La textura se atribuye por nivel y es totalmente escalable: basta
+   * cambiar `type` (ver GROUND_TEX) para cambiar todo el bloque. Los espacios
+   * entre tramos quedan vacíos → agujeros mortales.
+   *
+   * @param {Array<{x:number,width:number}>} segments – tramos de suelo sólido
+   * @param {string} [type]     – 'grass' | 'stone' | 'ice'
+   * @param {number} [surfaceY] – Y del centro del tile de superficie (p. ej. 752)
    */
-  fillGroundBottom(groundY, segments = null) {
-    const bounds = this.scene.physics.world.bounds;
-    const tileW  = 32;
-    const tileH  = 16;
+  createGround(segments, type = 'grass', surfaceY = 752) {
+    const texKey  = PlatformManager.GROUND_TEX[type] || 'ground_grass';
+    // Tipo de superficie para la física (fricción). 'ice' → deslizante.
+    const surface = (type === 'ice') ? 'ice' : 'normal';
 
-    // Rellena una columna vertical de tiles bajo un tramo, tileando desde
-    // `leftX` igual que createStatic → las filas inferiores quedan alineadas
-    // con la fila superior del suelo (sin píxeles desalineados).
-    const fillUnder = (leftX, count, texKey) => {
-      for (let row = 1; groundY + row * tileH <= bounds.height + tileH; row++) {
-        const y = groundY + row * tileH;
-        for (let i = 0; i < count; i++) {
-          const tile = this.staticGroup.create(leftX + i * tileW + tileW / 2, y, texKey);
-          tile.refreshBody();
-          tile.setDepth(5);
-        }
-      }
-    };
+    const top    = surfaceY - 8;                                  // superficie visible del suelo
+    const bottom = this.scene.physics.world.bounds.height + 16;   // hasta pasar el borde del mundo
+    const height = bottom - top;
 
-    if (segments) {
-      // Bajo cada tramo real, con SU textura → deja el vacío bajo los agujeros
-      for (const s of segments) {
-        const texKey = PlatformManager.SURFACE_TEX[s.texture] || 'platform_tile';
-        fillUnder(s.x, Math.max(1, Math.floor(s.width / tileW)), texKey);
-      }
-    } else {
-      // Todo el ancho, piedra (comportamiento clásico de respaldo)
-      fillUnder(0, Math.ceil(bounds.width / tileW), 'platform_stone');
+    // Textura 1×1 para los cuerpos de colisión (invisibles: el visual lo pone
+    // el TileSprite). Un único cuerpo por tramo en lugar de cientos de tiles.
+    if (!this.scene.textures.exists('ground_body_px')) {
+      const g = this.scene.make.graphics({ add: false });
+      g.fillStyle(0xffffff); g.fillRect(0, 0, 1, 1);
+      g.generateTexture('ground_body_px', 1, 1);
+      g.destroy();
+    }
+
+    for (const seg of segments) {
+      // Visual: bloque único tileado (la textura ground_X no repite en vertical
+      // dentro de la altura del bloque → superficie arriba, cuerpo macizo abajo).
+      this.scene.add.tileSprite(seg.x, top, seg.width, height, texKey)
+        .setOrigin(0, 0).setDepth(5);
+
+      // Colisión: un solo cuerpo estático que cubre el tramo.
+      const body = this.staticGroup.create(seg.x, top, 'ground_body_px')
+        .setOrigin(0, 0).setVisible(false);
+      body.setDisplaySize(seg.width, height);
+      body.refreshBody();
+      body.surface = surface;   // consultado por la detección de superficie (hielo)
     }
   }
 }

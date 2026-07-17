@@ -89,10 +89,10 @@ export default {
         { texture: 'stalactite',      x: 5050, y: 0, originY: 0, depth: 12, scale: 2.3, alpha: 0.8, tint: 0x1a1530 },
     ],
 
-    platforms: [
-        // ── Suelo principal (piedra de cueva) ────────────
-        { x: 0,    y: 752, width: 5600, texture: 'stone' },
+    // ── Suelo (bloque sólido; ver PlatformManager.createGround) ──
+    ground: { texture: 'stone', segments: [{ x: 0, width: 5600 }] },
 
+    platforms: [
         // ── Sección 1 — Entrada a la cueva (x: 0–900) ───
         { x: 80,   y: 680, width: 128,  texture: 'stone' },
         { x: 280,  y: 600, width: 96,   texture: 'stone' },

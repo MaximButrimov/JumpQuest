@@ -206,7 +206,7 @@ this.bridgeSystem = new BridgeSystem(scene).build(data.bridges);
 ### Superficies y deslizamiento (nivel 1-4)
 La física de movimiento en suelo depende del **tipo de superficie** que pisa el jugador, definido de forma **reutilizable** (no acoplado a ningún nivel):
 
-- Cada plataforma declara su material vía `texture` en los datos: `'grass'` / `'stone'` (agarre normal) o `'ice'` (deslizante). `PlatformManager` genera la textura y etiqueta cada tile con su `surface`.
+- Tanto el **suelo** (`data.ground.texture`) como cada **plataforma** (`texture`) declaran su material: `'grass'` / `'stone'` (agarre normal) o `'ice'` (deslizante). `PlatformManager` genera la textura y etiqueta el cuerpo con su `surface` (tanto en `createGround` como en `createStatic`).
 - `PlatformManager.addColliders(sprite, onSurface)` detecta genéricamente el tile bajo los pies del jugador y reporta su superficie cada frame.
 - Las **reglas** de cada superficie (aceleración + fricción) viven en el módulo [`mechanics/SurfacePhysics.js`](src/mechanics/SurfacePhysics.js). `Player` solo las consulta con `surfacePhysics(surface)` y las aplica en `update()` — no contiene lógica de hielo. En hielo la fricción es baja → al soltar el mando el personaje **sigue deslizándose**, y la aceleración es menor → cuesta arrancar y cambiar de dirección.
 
@@ -215,7 +215,7 @@ Añadir un material nuevo (p. ej. barro, arena) = añadir una clave a `SurfacePh
 ### Mecánicas de peligro (nivel 1-3)
 El nivel "Puentes Rotos" introduce dos obstáculos y un sistema de reaparición, todos **data-driven**:
 
-- **Agujeros mortales** — El suelo se define como varios **tramos** (`platforms` con la misma Y); los espacios entre ellos son huecos. `PlatformManager.fillGroundBottom()` solo rellena bajo los tramos reales, así que bajo los huecos hay vacío. El borde inferior del mundo se desactiva (`setBoundsCollision(…, false)`) para que el jugador caiga; al cruzar la línea de muerte, pierde una vida.
+- **Agujeros mortales** — El suelo se declara aparte en `data.ground` como varios **tramos** (`{ texture, y?, segments: [{ x, width }] }`); los espacios entre tramos son huecos. `PlatformManager.createGround()` construye cada tramo como un **bloque sólido** (1 TileSprite + 1 cuerpo estático), dejando vacíos los huecos. El borde inferior del mundo se desactiva (`setBoundsCollision(…, false)`) para que el jugador caiga; al cruzar la línea de muerte, pierde una vida.
 - **Puentes suspendidos temporizados** (`data.bridges: [{ x, y, width, fuse, breakTime }]`) — Mecánica encapsulada en el módulo [`mechanics/BridgeSystem.js`](src/mechanics/BridgeSystem.js). Al pisarlos arranca la mecha (`fuse` ms). Al agotarse, tiemblan fuerte (`breakTime` ms) y se **derrumban**: los tablones dejan de colisionar y caen, así que quien esté encima cae al vacío. Bajo ellos no hay suelo. El tiempo basta para cruzar corriendo, no para entretenerse.
 - **Checkpoints** (`data.checkpoints: [{ x, y }]`) — Al morir por caída (si quedan vidas), el jugador reaparece en el último checkpoint superado y los puentes derrumbados se **reconstruyen** (`bridgeSystem.reset()`).
 

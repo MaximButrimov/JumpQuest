@@ -81,10 +81,10 @@ export default {
         { texture: 'fg_fern', x: 4930, depth: 12, alpha: 0.82, flipX: true },
     ],
 
-    platforms: [
-        // ── Suelo principal (extendido a 5600) ───────────
-        { x: 0,    y: 752, width: 5600, texture: 'grass' },
+    // ── Suelo (bloque sólido; ver PlatformManager.createGround) ──
+    ground: { texture: 'grass', segments: [{ x: 0, width: 5600 }] },
 
+    platforms: [
         // ── Sección 1 (x: 0–1000) ────────────────────────
         { x: 100,  y: 650, width: 160,  texture: 'grass' },
         { x: 350,  y: 520, width: 128,  texture: 'grass' },

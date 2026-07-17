@@ -18,20 +18,21 @@ export default {
     worldWidth: 5600,
     theme: 'ruins',
 
-    // ── Tramos de suelo (y=752). Los huecos entre ellos son mortales ──
-    platforms: [
-        { x: 0,    y: 752, width: 1120, texture: 'stone' }, // G1  0..1120
-        // AGUJERO 1: 1120..1264 (salto)
-        { x: 1264, y: 752, width: 800,  texture: 'stone' }, // G2  1264..2064
-        // PUENTE 1 (vacío): 2064..2360
-        { x: 2360, y: 752, width: 640,  texture: 'stone' }, // G3  2360..3000
-        // AGUJERO 2: 3000..3220 (con piedra intermedia)
-        { x: 3220, y: 752, width: 896,  texture: 'stone' }, // G4  3220..4116
-        // PUENTE 2 (vacío): 4116..4420
-        { x: 4420, y: 752, width: 512,  texture: 'stone' }, // G5  4420..4932
-        // AGUJERO 3: 4932..5080 (salto)
-        { x: 5080, y: 752, width: 520,  texture: 'stone' }, // G6  5080..5600
+    // ── Suelo por TRAMOS (bloques sólidos; los huecos son mortales) ──
+    ground: {
+        texture: 'stone',
+        segments: [
+            { x: 0,    width: 1120 }, // G1  0..1120
+            { x: 1264, width: 800  }, // G2  1264..2064   (AGUJERO 1: 1120..1264)
+            { x: 2360, width: 640  }, // G3  2360..3000   (PUENTE 1: 2064..2360)
+            { x: 3220, width: 896  }, // G4  3220..4116   (AGUJERO 2: 3000..3220)
+            { x: 4420, width: 512  }, // G5  4420..4932   (PUENTE 2: 4116..4420)
+            { x: 5080, width: 520  }, // G6  5080..5600   (AGUJERO 3: 4932..5080)
+        ],
+    },
 
+    // ── Plataformas elevadas ──────────────────────────────────
+    platforms: [
         // ── Sección 1 — escalera de introducción (0..1120) ──
         { x: 260,  y: 672, width: 96,  texture: 'stone' },
         { x: 430,  y: 592, width: 96,  texture: 'stone' },

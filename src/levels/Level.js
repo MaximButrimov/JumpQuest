@@ -75,7 +75,8 @@ export default class Level {
         buildAllTextures(this.scene);   // módulos de textura (src/textures/)
 
         // 2. Construcción del nivel (depende de data)
-        this._buildPlatforms();
+        this._buildGround();             // suelo como bloques sólidos (por nivel)
+        this._buildPlatforms();          // plataformas elevadas y móviles
         this._buildSurfaceScatter();     // matas en bordes de plataforma según bioma (solo visual)
         // Mecánica de puentes: módulo independiente (mechanics/BridgeSystem.js)
         this.bridgeSystem = new BridgeSystem(this.scene).build(this.data.bridges);
@@ -96,7 +97,16 @@ export default class Level {
         if (!cfg) return;   // bioma sin dispersión definida
 
         const scene = this.scene;
-        const surfaces = (this.data.platforms || []).filter(p => cfg.textures.includes(p.texture));
+
+        // Fuente: tramos de suelo (como pseudo-plataformas) + plataformas elevadas.
+        // El suelo va primero, para que el borde del suelo se siembre igual que antes.
+        const gd = this.data.ground;
+        const groundSurfaces = gd
+            ? gd.segments.map(s => ({ x: s.x, width: s.width, y: gd.y ?? 752, texture: gd.texture }))
+            : [];
+        const all = groundSurfaces.concat(this.data.platforms || []);
+
+        const surfaces = all.filter(p => cfg.textures.includes(p.texture));
         const rnd = new Phaser.Math.RandomDataGenerator([cfg.seed]);
 
         for (const p of surfaces) {
@@ -111,27 +121,33 @@ export default class Level {
     }
 
     // ─────────────────────────────
-    // PLATAFORMAS
+    // SUELO (bloques sólidos, por nivel)
+    // ─────────────────────────────
+    // El suelo se declara aparte de las plataformas en data.ground:
+    //   { texture: 'grass'|'stone'|'ice', y?: 752, segments: [{x, width}, …] }
+    // Cada tramo se construye como un bloque macizo (ver PlatformManager.createGround).
+    // Los espacios entre tramos son agujeros mortales.
+    _buildGround() {
+        const gd = this.data.ground;
+        if (!gd) return;   // nivel sin suelo definido
+        this.platformManager.createGround(gd.segments, gd.texture, gd.y ?? 752);
+    }
+
+    // ─────────────────────────────
+    // PLATAFORMAS (elevadas y móviles)
     // ─────────────────────────────
     _buildPlatforms() {
         const pm = this.platformManager;
 
         if (!this.data) throw new Error('[Level] Falta "data". ¿Pasaste Level1Data al constructor?');
 
-        this.data.platforms.forEach(p => {
+        (this.data.platforms || []).forEach(p => {
             pm.createStatic(p.x, p.y, p.width, p.texture);
         });
 
-        this.data.movingPlatforms.forEach(p => {
+        (this.data.movingPlatforms || []).forEach(p => {
             pm.createMoving(p.x, p.y, p.width, p.config);
         });
-
-        // Rellena visualmente el hueco entre el suelo y el límite inferior del
-        // mundo. Solo rellena bajo los tramos de suelo reales (misma Y que la
-        // plataforma más ancha), dejando vacíos los agujeros mortales del nivel.
-        const groundPlatform = this.data.platforms.reduce((a, b) => a.width > b.width ? a : b);
-        const groundSegments = this.data.platforms.filter(p => p.y === groundPlatform.y);
-        pm.fillGroundBottom(groundPlatform.y, groundSegments);
     }
 
     // ─────────────────────────────

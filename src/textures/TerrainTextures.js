@@ -71,5 +71,61 @@ export default class TerrainTextures {
             g.fillRect(23, 4, 1, 8);
             g.fillRect(6, 9, 4, 1);
         });
+
+        // ══════════════════════════════════════════════════════
+        //  BLOQUES DE SUELO (32×80) — superficie arriba + cuerpo
+        //  MACIZO abajo (sin franjas repetidas). Los usa
+        //  PlatformManager.createGround() como TileSprite: se tilean
+        //  en horizontal y el cuerpo sólido rellena hacia abajo.
+        // ══════════════════════════════════════════════════════
+
+        // Suelo de CÉSPED (césped arriba + tierra maciza)
+        defineTexture(scene, 'ground_grass', 32, 80, (g) => {
+            g.fillStyle(0x6b4a2a); g.fillRect(0, 0, 32, 80);              // cuerpo de tierra
+            g.fillStyle(0x5f3f22); g.fillRect(0, 44, 32, 36);            // tierra más oscura abajo
+            g.fillStyle(0x7a5636); g.fillRect(3, 22, 10, 8); g.fillRect(18, 34, 9, 7); g.fillRect(6, 56, 8, 6); g.fillRect(20, 62, 8, 6);
+            g.fillStyle(0x4a3018); g.fillRect(10, 30, 3, 2); g.fillRect(22, 48, 3, 2); g.fillRect(5, 68, 3, 2); g.fillRect(24, 24, 2, 2); // guijarros
+            g.fillStyle(0x8a6038); g.fillRect(14, 40, 2, 2); g.fillRect(26, 58, 2, 2); g.fillRect(8, 50, 2, 2);   // motas claras
+            // Superficie de césped (calcada de platform_tile)
+            g.fillStyle(0x7a5230); g.fillRect(0, 0, 32, 16);
+            g.fillStyle(0x8a5f38); g.fillRect(0, 7, 32, 2);
+            g.fillStyle(0x9a7048); g.fillRect(4, 11, 3, 2); g.fillRect(16, 12, 2, 2); g.fillRect(25, 11, 3, 2);
+            g.fillStyle(0x3fa24f); g.fillRect(0, 0, 32, 6);
+            for (let i = 0; i < 32; i += 8) g.fillRect(i, 6, 4, 2);
+            g.fillStyle(0x5fc76a); g.fillRect(0, 0, 32, 2);
+            g.fillStyle(0x2f7d3f); for (let i = 2; i < 32; i += 6) g.fillRect(i, 0, 1, 3);
+        });
+
+        // Suelo de PIEDRA (roca arriba + roca maciza)
+        defineTexture(scene, 'ground_stone', 32, 80, (g) => {
+            g.fillStyle(0x565863); g.fillRect(0, 0, 32, 80);              // cuerpo de roca
+            g.fillStyle(0x484a54); g.fillRect(0, 44, 32, 36);           // roca más oscura abajo
+            g.fillStyle(0x63656f); g.fillRect(4, 22, 11, 9); g.fillRect(19, 34, 9, 8); g.fillRect(7, 54, 9, 7); g.fillRect(21, 60, 8, 7);
+            g.fillStyle(0x3a3c46); g.fillRect(12, 30, 1, 12); g.fillRect(24, 46, 1, 14); g.fillRect(8, 64, 1, 10); // grietas
+            g.fillStyle(0x2f313a); g.fillRect(6, 44, 2, 2); g.fillRect(26, 52, 2, 2);   // motas oscuras
+            // Superficie de piedra (calcada de platform_stone)
+            g.fillStyle(0x6f7184); g.fillRect(0, 0, 32, 16);
+            g.fillStyle(0x616376); g.fillRect(0, 7, 15, 6); g.fillRect(17, 9, 15, 5);
+            g.fillStyle(0x7d7f92); g.fillRect(5, 2, 13, 4); g.fillRect(21, 1, 9, 3);
+            g.fillStyle(0x8d8fa2); g.fillRect(0, 0, 32, 2);
+            g.fillStyle(0x9fa1b4); g.fillRect(2, 0, 7, 1); g.fillRect(15, 0, 6, 1); g.fillRect(26, 0, 4, 1);
+            g.fillStyle(0x3a3c50); g.fillRect(9, 3, 1, 4); g.fillRect(10, 6, 3, 1); g.fillRect(24, 4, 1, 5); g.fillRect(21, 9, 4, 1);
+        });
+
+        // Suelo de HIELO (hielo arriba + hielo compacto)
+        defineTexture(scene, 'ground_ice', 32, 80, (g) => {
+            g.fillStyle(0x8ec4dc); g.fillRect(0, 0, 32, 80);              // cuerpo de hielo
+            g.fillStyle(0x74aecb); g.fillRect(0, 44, 32, 36);           // hielo más denso abajo
+            g.fillStyle(0xa6d6ea); g.fillRect(4, 24, 12, 9); g.fillRect(18, 40, 10, 8); g.fillRect(6, 58, 10, 7);
+            g.fillStyle(0x5f97b8); g.fillRect(12, 28, 1, 14); g.fillRect(24, 48, 1, 16); g.fillRect(8, 64, 1, 10); // grietas
+            g.fillStyle(0xffffff, 0.4); g.fillRect(6, 30, 4, 1); g.fillRect(20, 50, 5, 1);   // brillos internos
+            // Superficie de hielo (calcada de platform_ice)
+            g.fillStyle(0x9ad8ee); g.fillRect(0, 0, 32, 16);
+            g.fillStyle(0xd6f2ff); g.fillRect(0, 0, 32, 4);
+            g.fillStyle(0x6fb2d0); g.fillRect(0, 13, 32, 3);
+            g.fillStyle(0xffffff, 0.75); g.fillRect(3, 1, 9, 1);
+            g.fillStyle(0xffffff, 0.4);  g.fillRect(18, 2, 7, 1);
+            g.fillStyle(0x8ac6de); g.fillRect(11, 5, 1, 7); g.fillRect(23, 4, 1, 8); g.fillRect(6, 9, 4, 1);
+        });
     }
 }
