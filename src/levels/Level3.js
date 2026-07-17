@@ -156,20 +156,66 @@ export default {
         { x: 5000, y: 560, speed: 95, type: 'bat', floatAmplitude: 42 },
     ],
 
-    // ── Decoraciones (ruinas) ────────────────────────────────
+    // ── Decoraciones (ciudad desértica en ruinas, por capas) ──
+    //  depth 3  → edificios/muros derruidos de fondo (apoyados en el suelo)
+    //  depth 6  → props de suelo: vehículos, escombros, barriles, dunas…
+    //  depth 12 → primer plano que enmarca (farolas, árboles secos, columna)
+    //  IMPORTANTE: todo se coloca sobre los TRAMOS DE SUELO sólidos
+    //  (0-1120, 1264-2064, 2360-3000, 3220-4116, 4420-4932, 5080-5600),
+    //  nunca sobre agujeros ni vacíos de puente. Puramente visual.
     decorations: [
-        { texture: 'broken_pillar', x: 150  },
-        { texture: 'broken_pillar', x: 900  },
-        { texture: 'broken_pillar', x: 2700 },
-        { texture: 'broken_pillar', x: 3520 },
-        { texture: 'broken_pillar', x: 4720 },
-        { texture: 'broken_pillar', x: 5300 },
-        { texture: 'bush', x: 340  },
-        { texture: 'bush', x: 1420 },
-        { texture: 'bush', x: 2520 },
-        { texture: 'bush', x: 3320 },
-        { texture: 'bush', x: 4520 },
-        { texture: 'bush', x: 5220 },
+        // ══ FONDO (depth 3) — edificios y muros derruidos, atenuados ══
+        { texture: 'ruin_building_a', x: 140,  depth: 3, scale: 1.3,  tint: 0xd0c6a8 },
+        { texture: 'ruin_building_b', x: 520,  depth: 3, scale: 1.2,  tint: 0xd0c6a8, flipX: true },
+        { texture: 'broken_wall',     x: 960,  depth: 3, scale: 1.5,  tint: 0xd0c6a8 },
+        { texture: 'ruin_building_a', x: 1520, depth: 3, scale: 1.15, tint: 0xd0c6a8, flipX: true },
+        { texture: 'ruin_building_b', x: 2600, depth: 3, scale: 1.2,  tint: 0xd0c6a8 },
+        { texture: 'ruin_building_a', x: 3480, depth: 3, scale: 1.3,  tint: 0xd0c6a8, flipX: true },
+        { texture: 'broken_wall',     x: 3900, depth: 3, scale: 1.4,  tint: 0xd0c6a8 },
+        { texture: 'ruin_building_b', x: 4620, depth: 3, scale: 1.15, tint: 0xd0c6a8 },
+        { texture: 'ruin_building_a', x: 5320, depth: 3, scale: 1.25, tint: 0xd0c6a8 },
+
+        // ══ SUELO (depth 6) — vehículos, escombros, barriles, dunas, secos ══
+        // Tramo 1 (0-1120)
+        { texture: 'sand_drift',  x: 180,  depth: 6, scale: 1.2 },
+        { texture: 'car_wreck',   x: 380,  depth: 6 },
+        { texture: 'rubble_pile', x: 680,  depth: 6 },
+        { texture: 'barrel',      x: 742,  depth: 6 },
+        { texture: 'dead_tree',   x: 980,  depth: 6 },
+        // Tramo 2 (1264-2064)
+        { texture: 'ruin_column', x: 1360, depth: 6 },
+        { texture: 'sand_drift',  x: 1600, depth: 6, scale: 1.1 },
+        { texture: 'car_wreck',   x: 1760, depth: 6, flipX: true },
+        { texture: 'rubble_pile', x: 1950, depth: 6 },
+        // Tramo 3 (2360-3000)
+        { texture: 'sand_drift',  x: 2620, depth: 6 },
+        { texture: 'debris_slab', x: 2440, depth: 6 },
+        { texture: 'barrel',      x: 2492, depth: 6 },
+        { texture: 'rubble_pile', x: 2720, depth: 6 },
+        { texture: 'dead_tree',   x: 2880, depth: 6 },
+        // Tramo 4 (3220-4116)
+        { texture: 'sand_drift',  x: 3420, depth: 6, scale: 1.2 },
+        { texture: 'car_wreck',   x: 3340, depth: 6 },
+        { texture: 'rubble_pile', x: 3560, depth: 6 },
+        { texture: 'ruin_column', x: 3760, depth: 6 },
+        { texture: 'barrel',      x: 3980, depth: 6 },
+        // Tramo 5 (4420-4932)
+        { texture: 'debris_slab', x: 4520, depth: 6 },
+        { texture: 'dead_tree',   x: 4700, depth: 6 },
+        { texture: 'rubble_pile', x: 4860, depth: 6 },
+        // Tramo 6 (5080-5600)
+        { texture: 'sand_drift',  x: 5140, depth: 6, scale: 1.1 },
+        { texture: 'car_wreck',   x: 5210, depth: 6, flipX: true },
+        { texture: 'barrel',      x: 5268, depth: 6 },
+        { texture: 'rubble_pile', x: 5390, depth: 6 },
+
+        // ══ PRIMER PLANO (depth 12) — enmarca (semitransparente/silueta) ══
+        { texture: 'lamp_post',   x: 280,  depth: 12, scale: 1.3, alpha: 0.85 },
+        { texture: 'dead_tree',   x: 1400, depth: 12, scale: 1.5, alpha: 0.8, tint: 0x6a5c40 },
+        { texture: 'ruin_column', x: 2440, depth: 12, scale: 1.6, alpha: 0.8, tint: 0x6a5c40 },
+        { texture: 'lamp_post',   x: 3300, depth: 12, scale: 1.3, alpha: 0.85, flipX: true },
+        { texture: 'lamp_post',   x: 4520, depth: 12, scale: 1.4, alpha: 0.85 },
+        { texture: 'dead_tree',   x: 5250, depth: 12, scale: 1.5, alpha: 0.8, tint: 0x6a5c40 },
     ],
 
     // ── Portal de salida (sobre la plataforma final 5440..5600, top 540) ──

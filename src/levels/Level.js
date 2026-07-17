@@ -4,15 +4,17 @@ import BridgeSystem from "../mechanics/BridgeSystem.js";
 
 export default class Level {
     // ─────────────────────────────────────────────────────────
-    //  DISPERSIÓN DE SUPERFICIE (config por tipo de terreno)
+    //  DISPERSIÓN DE SUPERFICIE (config por TEMA de nivel)
     // ─────────────────────────────────────────────────────────
-    // Cada bioma declara qué "matas" siembra sobre el borde superior de sus
-    // plataformas. 100% visual: no crea cuerpos de física ni altera colisiones.
-    // Añadir un bioma nuevo = añadir una entrada aquí (sin tocar la lógica).
+    // Cada bioma declara sobre qué texturas de terreno siembra y qué "matas"
+    // reparte en el borde superior de esas plataformas. Indexado por tema (no
+    // por textura) para que un mismo terreno (p. ej. 'stone') disperse cosas
+    // distintas según el bioma. 100% visual: sin física ni colisiones.
+    // Añadir un bioma = añadir una entrada aquí (sin tocar la lógica).
     static SCATTER = {
-        // Bosque: matas de hierba con alguna flor/seta.
-        grass: {
-            seed: 'forest-foliage', step: [28, 46], scale: [0.85, 1.15], depth: 6,
+        // Bosque: matas de hierba con alguna flor/seta sobre el césped.
+        forest: {
+            textures: ['grass'], seed: 'forest-foliage', step: [28, 46], scale: [0.85, 1.15], depth: 6,
             pick: (rnd) => {
                 const roll = rnd.frac();
                 if (roll < 0.09) return rnd.pick(['flower_red', 'flower_yellow']);
@@ -20,14 +22,24 @@ export default class Level {
                 return 'grass_tuft';
             },
         },
-        // Cueva: musgo con motas, algún hongo luminoso y cristal disperso.
-        stone: {
-            seed: 'cave-scatter', step: [40, 74], scale: [0.7, 1.05], depth: 6,
+        // Cueva: musgo con motas, algún hongo luminoso y cristal sobre la roca.
+        cave: {
+            textures: ['stone'], seed: 'cave-scatter', step: [40, 74], scale: [0.7, 1.05], depth: 6,
             pick: (rnd) => {
                 const roll = rnd.frac();
                 if (roll < 0.12) return 'glow_mushroom';
                 if (roll < 0.22) return 'cave_crystal';
                 return 'moss_patch';
+            },
+        },
+        // Ruinas: escombros, chatarra y hierba seca sobre la piedra árida.
+        ruins: {
+            textures: ['stone'], seed: 'ruins-scatter', step: [46, 90], scale: [0.7, 1.1], depth: 6,
+            pick: (rnd) => {
+                const roll = rnd.frac();
+                if (roll < 0.14) return 'dry_tuft';
+                if (roll < 0.24) return 'scrap_bit';
+                return 'rubble_bit';
             },
         },
     };
@@ -71,22 +83,20 @@ export default class Level {
     // de terreno (ver Level.SCATTER). Genérico y reutilizable por cualquier
     // bioma. 100% decorativo: no crea cuerpos de física ni altera colisiones.
     _buildSurfaceScatter() {
+        const cfg = Level.SCATTER[this.data.theme];
+        if (!cfg) return;   // bioma sin dispersión definida
+
         const scene = this.scene;
-        const platforms = this.data.platforms || [];
+        const surfaces = (this.data.platforms || []).filter(p => cfg.textures.includes(p.texture));
+        const rnd = new Phaser.Math.RandomDataGenerator([cfg.seed]);
 
-        for (const [type, cfg] of Object.entries(Level.SCATTER)) {
-            const surfaces = platforms.filter(p => p.texture === type);
-            if (surfaces.length === 0) continue;
-
-            const rnd = new Phaser.Math.RandomDataGenerator([cfg.seed]);
-            for (const p of surfaces) {
-                const top = p.y - 8;   // superficie del tile (16px, centrado en p.y)
-                for (let x = p.x + 8; x < p.x + p.width - 6; x += rnd.between(cfg.step[0], cfg.step[1])) {
-                    const img = scene.add.image(x, top + 2, cfg.pick(rnd))
-                        .setOrigin(0.5, 1).setDepth(cfg.depth)
-                        .setScale(rnd.realInRange(cfg.scale[0], cfg.scale[1]));
-                    if (rnd.frac() < 0.5) img.setFlipX(true);
-                }
+        for (const p of surfaces) {
+            const top = p.y - 8;   // superficie del tile (16px, centrado en p.y)
+            for (let x = p.x + 8; x < p.x + p.width - 6; x += rnd.between(cfg.step[0], cfg.step[1])) {
+                const img = scene.add.image(x, top + 2, cfg.pick(rnd))
+                    .setOrigin(0.5, 1).setDepth(cfg.depth)
+                    .setScale(rnd.realInRange(cfg.scale[0], cfg.scale[1]));
+                if (rnd.frac() < 0.5) img.setFlipX(true);
             }
         }
     }

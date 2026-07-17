@@ -10,8 +10,11 @@
  *  Temas disponibles:
  *    · 'forest' → bosque diurno: cielo azul, sol, colinas, nubes,
  *                 hojas cayendo.
- *    · 'cave'   → cueva subterránea: oscuridad, muro rocoso,
+ *    · 'cave'   → cueva subterránea: oscuridad, muro rocoso orgánico,
  *                 cristales luminiscentes, motas de polvo flotante.
+ *    · 'ruins'  → ciudad desértica postapocalíptica: cielo polvoriento,
+ *                 skyline de rascacielos rotos, dunas, arena arrastrada.
+ *    · 'snow'   → escenario nevado: cielo frío, montañas, nevada.
  *
  *  Para añadir un tema nuevo: crea un _buildX() y regístralo en
  *  el switch de build(). Usa claves de textura con sufijo propio.
@@ -356,84 +359,125 @@ export default class BackgroundSystem {
     _buildRuins(W, H, VW, VH) {
         const scene = this.scene;
 
-        // ── Cielo de atardecer ────────────────────────────────
+        // ── Cielo árido y polvoriento (tormenta de polvo lejana) ─
         this._gradientSky('bg_sky_ruins', VW, VH, [
-            [0,    0x241a3a],
-            [0.35, 0x503057],
-            [0.6,  0x9a4a52],
-            [0.82, 0xd07a4a],
-            [1.0,  0xecab5e],
+            [0,    0x4e4636],   // cenit: polvo oscuro
+            [0.38, 0x8a7a58],   // calima media
+            [0.66, 0xb89a6e],   // horizonte polvoriento
+            [0.85, 0xd0b585],
+            [1.0,  0xc2a877],
         ]);
 
-        // ── Sol bajo en el horizonte (fijo en pantalla) ───────
-        if (!scene.textures.exists('sun_ruins')) {
+        // ── Sol pálido velado por el polvo (fijo en pantalla) ──
+        if (!scene.textures.exists('sun_ruins_dust')) {
             const g = scene.make.graphics({ add: false });
-            for (let r = 70; r > 0; r -= 4) {
-                g.fillStyle(0xffd07a, 0.05 + 0.09 * (1 - r / 70));
-                g.fillCircle(70, 70, r);
+            for (let r = 78; r > 0; r -= 4) {
+                g.fillStyle(0xe8cf9a, 0.04 + 0.06 * (1 - r / 78));
+                g.fillCircle(78, 78, r);
             }
-            g.fillStyle(0xffe4a0, 1); g.fillCircle(70, 70, 34);
-            g.generateTexture('sun_ruins', 140, 140);
+            g.fillStyle(0xf0dcae, 0.85); g.fillCircle(78, 78, 34);   // disco tenue
+            g.generateTexture('sun_ruins_dust', 156, 156);
             g.destroy();
         }
-        const sun = scene.add.image(VW * 0.28, VH * 0.72, 'sun_ruins')
-            .setScrollFactor(0).setDepth(1);
-        scene.tweens.add({ targets: sun, scale: 1.05, alpha: 0.9, duration: 4000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+        const sun = scene.add.image(VW * 0.7, VH * 0.28, 'sun_ruins_dust')
+            .setScrollFactor(0).setDepth(1).setAlpha(0.85);
+        scene.tweens.add({ targets: sun, alpha: 0.7, duration: 5000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
 
-        // ── Siluetas lejanas: torres y puentes rotos ──────────
-        if (!scene.textures.exists('ruins_far')) {
+        // ── Skyline LEJANO: rascacielos rotos (perspectiva de calima) ─
+        if (!scene.textures.exists('ruins_city_far')) {
             const g = scene.make.graphics({ add: false });
-            g.fillStyle(0x3a2440, 1);
-            // Torres desmoronadas de distintas alturas
-            const towers = [[40, 120], [110, 80], [230, 150], [300, 100], [470, 135], [560, 90], [700, 160]];
-            for (const [tx, th] of towers) {
-                g.fillRect(tx, 220 - th, 40, th);
-                // cima rota (dientes)
-                for (let k = 0; k < 4; k++) if (k % 2 === 0) g.fillRect(tx + k * 10, 220 - th - 8, 10, 8);
+            const rnd = new Phaser.Math.RandomDataGenerator(['ruins-far']);
+            g.fillStyle(0x8f8068, 1);
+            let x = 0;
+            while (x < 800) {
+                const bw = rnd.between(30, 70), bh = rnd.between(60, 200);
+                g.fillRect(x, 220 - bh, bw, bh);
+                // antenas / cimas rotas
+                for (let k = 0; k < 3; k++) if (rnd.frac() < 0.5) g.fillRect(x + k * (bw / 3), 220 - bh - rnd.between(3, 12), 3, rnd.between(3, 12));
+                x += bw + rnd.between(2, 12);
             }
-            // Arcos de puente roto entre torres
-            g.lineStyle(6, 0x3a2440, 1);
-            g.beginPath(); g.arc(175, 130, 55, Math.PI, 0, false); g.strokePath();
-            g.beginPath(); g.arc(520, 150, 60, Math.PI, 0, false); g.strokePath();
-            g.generateTexture('ruins_far', 760, 230);
+            g.generateTexture('ruins_city_far', 800, 220);
             g.destroy();
         }
-        for (let i = 0; i < Math.ceil(W / 760) + 1; i++) {
-            scene.add.image(i * 760, H, 'ruins_far')
-                .setOrigin(0, 1).setScrollFactor(0.25).setDepth(1).setAlpha(0.55);
+        for (let i = 0; i < Math.ceil(W / 800) + 1; i++) {
+            scene.add.image(i * 800, H, 'ruins_city_far')
+                .setOrigin(0, 1).setScrollFactor(0.16).setDepth(1).setAlpha(0.55);
         }
 
-        // ── Siluetas cercanas más oscuras ─────────────────────
-        if (!scene.textures.exists('ruins_near')) {
+        // ── Skyline MEDIO: edificios derruidos + puente colapsado ─
+        if (!scene.textures.exists('ruins_city_mid')) {
             const g = scene.make.graphics({ add: false });
-            g.fillStyle(0x1f1329, 1);
-            const towers = [[60, 180], [180, 130], [360, 200], [520, 150], [660, 190]];
-            for (const [tx, th] of towers) {
-                g.fillRect(tx, 210 - th, 54, th);
-                for (let k = 0; k < 5; k++) if (k % 2 === 0) g.fillRect(tx + k * 11, 210 - th - 9, 11, 9);
+            const rnd = new Phaser.Math.RandomDataGenerator(['ruins-mid']);
+            // Edificios
+            let x = 0;
+            while (x < 540) {
+                const bw = rnd.between(44, 88), bh = rnd.between(80, 230);
+                g.fillStyle(0x6b5f4a); g.fillRect(x, 260 - bh, bw, bh);
+                for (let k = 0; k < 3; k++) if (rnd.frac() < 0.5) g.fillRect(x + k * (bw / 3), 260 - bh - rnd.between(4, 14), bw / 3 - 2, rnd.between(4, 14));
+                g.fillStyle(0x554b3a);                                 // ventanas
+                for (let wy = 260 - bh + 12; wy < 252; wy += 20) for (let wx = x + 6; wx < x + bw - 8; wx += 14) if (rnd.frac() < 0.7) g.fillRect(wx, wy, 7, 9);
+                x += bw + rnd.between(10, 34);
             }
-            g.generateTexture('ruins_near', 760, 210);
+            // Puente colapsado (dos pilonas + tablero roto que cuelga)
+            g.fillStyle(0x6b5f4a);
+            g.fillRect(560, 118, 12, 142); g.fillRect(700, 118, 12, 142); // pilonas
+            g.fillRect(560, 150, 62, 8);  g.fillRect(650, 150, 62, 8);    // tramos
+            g.fillTriangle(622, 150, 650, 150, 636, 214);                 // tramo central caído
+            g.fillRect(566, 120, 1, 30); g.fillRect(706, 120, 1, 30);     // cables rotos
+            g.generateTexture('ruins_city_mid', 800, 260);
             g.destroy();
         }
-        for (let i = 0; i < Math.ceil(W / 760) + 1; i++) {
-            scene.add.image(i * 760, H, 'ruins_near')
-                .setOrigin(0, 1).setScrollFactor(0.45).setDepth(2).setAlpha(0.85);
+        for (let i = 0; i < Math.ceil(W / 800) + 1; i++) {
+            scene.add.image(i * 800, H, 'ruins_city_mid')
+                .setOrigin(0, 1).setScrollFactor(0.32).setDepth(1).setAlpha(0.82);
         }
 
-        // ── Neblina / polvo a la deriva (ambiente) ────────────
-        this._pixel('mist_px', 0xffffff, 6);
-        const mist = scene.add.particles(0, 0, 'mist_px', {
-            x: { min: 0, max: VW },
-            y: { min: VH * 0.4, max: VH },
-            speedX: { min: 4, max: 18 },
-            speedY: { min: -4, max: 4 },
-            scale:  { min: 1, max: 3 },
-            lifespan: 9000,
-            frequency: 500,
-            alpha: { min: 0.04, max: 0.14 },
-            tint: [0xd8b0a0, 0xc0a0c0, 0xffffff],
+        // ── Dunas / campo de escombros cercano ────────────────
+        if (!scene.textures.exists('ruins_dunes')) {
+            const g = scene.make.graphics({ add: false });
+            const rnd = new Phaser.Math.RandomDataGenerator(['ruins-dunes']);
+            g.fillStyle(0xb89a6a, 1);
+            g.fillEllipse(120, 130, 360, 130); g.fillEllipse(430, 130, 460, 150); g.fillEllipse(720, 130, 380, 120);
+            g.fillStyle(0xccb082, 0.7);                                // crestas iluminadas
+            g.fillEllipse(120, 118, 240, 70); g.fillEllipse(430, 116, 300, 84);
+            g.fillStyle(0x6b5f4a, 0.8);                                // escombro lejano disperso
+            for (let i = 0; i < 10; i++) g.fillRect(rnd.between(20, 780), rnd.between(96, 116), rnd.between(4, 12), rnd.between(4, 9));
+            g.generateTexture('ruins_dunes', 800, 130);
+            g.destroy();
+        }
+        for (let i = 0; i < Math.ceil(W / 800) + 1; i++) {
+            scene.add.image(i * 800, H, 'ruins_dunes')
+                .setOrigin(0, 1).setScrollFactor(0.5).setDepth(2).setAlpha(0.95);
+        }
+
+        // ── Polvo / arena arrastrada por el viento (ambiente) ──
+        this._pixel('sand_px', 0xffffff, 4);
+        const sand = scene.add.particles(0, 0, 'sand_px', {
+            x: { min: -10, max: VW },
+            y: { min: 0, max: VH },
+            speedX: { min: 30, max: 90 },       // viento hacia la derecha
+            speedY: { min: -6, max: 10 },
+            scale:  { min: 0.4, max: 1.4 },
+            lifespan: 6000,
+            frequency: 120,
+            alpha: { min: 0.05, max: 0.2 },
+            tint: [0xc2a878, 0xd8bd8e, 0xa8895c],
         });
-        mist.setScrollFactor(0).setDepth(3);
+        sand.setScrollFactor(0).setDepth(3);
+
+        // ── Velo de calima cálido cerca del horizonte (sutil) ──
+        this._pixel('haze_px', 0xffffff, 8);
+        const haze = scene.add.particles(0, 0, 'haze_px', {
+            x: { min: 0, max: VW },
+            y: { min: VH * 0.5, max: VH },
+            speedX: { min: 6, max: 20 },
+            scale:  { min: 3, max: 7 },
+            lifespan: 8000,
+            frequency: 500,
+            alpha: { min: 0.03, max: 0.09 },
+            tint: [0xd8bd8e, 0xc2a878],
+        });
+        haze.setScrollFactor(0).setDepth(2);
     }
 
     // ══════════════════════════════════════════════════════════
