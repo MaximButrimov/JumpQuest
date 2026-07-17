@@ -42,6 +42,15 @@ export default class Level {
                 return 'rubble_bit';
             },
         },
+        // Nieve: matas de nieve con alguna esquirla de hielo sobre hielo y piedra.
+        snow: {
+            textures: ['ice', 'stone'], seed: 'snow-scatter', step: [38, 72], scale: [0.7, 1.05], depth: 6,
+            pick: (rnd) => {
+                const roll = rnd.frac();
+                if (roll < 0.16) return 'ice_bit';
+                return 'snow_tuft';
+            },
+        },
     };
 
     constructor(scene, platformManager, data) {

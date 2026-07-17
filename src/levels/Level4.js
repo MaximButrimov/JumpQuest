@@ -106,17 +106,71 @@ export default {
         { x: 3975, y: 600, speed: 85, type: 'bat', floatAmplitude: 44 },
     ],
 
-    // ── Decoraciones (nieve) ─────────────────────────────────
+    // ── Decoraciones (cumbre helada, por capas de profundidad) ──
+    //  depth 3  → rocas nevadas, bloques de glaciar y pinos de fondo (atenuados)
+    //  depth 6  → suelo: hielo, lagos congelados, carámbanos, dunas, muñecos…
+    //  depth 12 → primer plano que enmarca (pinos nevados, racimos de hielo)
+    //  IMPORTANTE: todo se coloca sobre los TRAMOS DE SUELO sólidos
+    //  (0-1500, 1650-2600, 2750-3900, 4050-5600), nunca sobre los agujeros.
     decorations: [
-        { texture: 'snow_pine', x: 180  },
-        { texture: 'snow_pine', x: 640  },
-        { texture: 'snowman',   x: 900  },
-        { texture: 'snow_pine', x: 2000 },
-        { texture: 'snowman',   x: 2500 },
-        { texture: 'snow_pine', x: 3050 },
-        { texture: 'snow_pine', x: 3800 },
-        { texture: 'snowman',   x: 4300 },
-        { texture: 'snow_pine', x: 5000 },
+        // ══ FONDO (depth 3) — rocas nevadas, glaciar y pinos, atenuados ══
+        { texture: 'snow_rock',   x: 250,  depth: 3, scale: 1.6,  tint: 0xd2e2f0 },
+        { texture: 'ice_boulder', x: 850,  depth: 3, scale: 1.5,  tint: 0xd2e2f0 },
+        { texture: 'snow_pine',   x: 1150, depth: 3, scale: 1.3,  tint: 0xd2e2f0 },
+        { texture: 'snow_rock',   x: 1850, depth: 3, scale: 1.5,  tint: 0xd2e2f0, flipX: true },
+        { texture: 'ice_boulder', x: 2350, depth: 3, scale: 1.6,  tint: 0xd2e2f0 },
+        { texture: 'snow_pine',   x: 2900, depth: 3, scale: 1.4,  tint: 0xd2e2f0 },
+        { texture: 'snow_rock',   x: 3400, depth: 3, scale: 1.6,  tint: 0xd2e2f0, flipX: true },
+        { texture: 'ice_boulder', x: 4300, depth: 3, scale: 1.5,  tint: 0xd2e2f0 },
+        { texture: 'snow_pine',   x: 4900, depth: 3, scale: 1.35, tint: 0xd2e2f0 },
+        { texture: 'snow_rock',   x: 5250, depth: 3, scale: 1.5,  tint: 0xd2e2f0, flipX: true },
+
+        // ══ SUELO (depth 6) — hielo, lagos, carámbanos, dunas, figuras ══
+        // Tramo 1 (0-1500)
+        { texture: 'snow_mound',  x: 150,  depth: 6, scale: 1.2 },
+        { texture: 'snow_pine',   x: 340,  depth: 6 },
+        { texture: 'frozen_lake', x: 560,  depth: 6, scale: 1.1 },
+        { texture: 'ice_cluster', x: 640,  depth: 6 },
+        { texture: 'snowman',     x: 900,  depth: 6 },
+        { texture: 'ice_spike',   x: 1080, depth: 6 },
+        { texture: 'snow_rock',   x: 1300, depth: 6 },
+        { texture: 'icicles',     x: 440,  y: 668,  originY: 0, depth: 6 },   // bajo plataforma 400/660
+        { texture: 'icicles',     x: 1290, y: 568,  originY: 0, depth: 6 },   // bajo plataforma 1250/560
+        // Tramo 2 (1650-2600)
+        { texture: 'snow_mound',  x: 1720, depth: 6, scale: 1.1 },
+        { texture: 'frozen_lake', x: 1900, depth: 6, scale: 1.2 },
+        { texture: 'ice_cluster', x: 2000, depth: 6 },
+        { texture: 'snowman',     x: 2300, depth: 6 },
+        { texture: 'ice_spike',   x: 2480, depth: 6 },
+        { texture: 'ice_boulder', x: 2540, depth: 6 },
+        { texture: 'icicles',     x: 2000, y: 568,  originY: 0, depth: 6 },   // bajo plataforma 1960/560
+        // Tramo 3 (2750-3900)
+        { texture: 'snow_mound',  x: 2820, depth: 6, scale: 1.1 },
+        { texture: 'ice_cluster', x: 3050, depth: 6 },
+        { texture: 'snow_pine',   x: 3200, depth: 6 },
+        { texture: 'frozen_lake', x: 3400, depth: 6, scale: 1.2 },
+        { texture: 'ice_spike',   x: 3600, depth: 6 },
+        { texture: 'snowman',     x: 3800, depth: 6 },
+        { texture: 'icicles',     x: 3100, y: 568,  originY: 0, depth: 6 },   // bajo plataforma 3060/560
+        { texture: 'icicles',     x: 3740, y: 478,  originY: 0, depth: 6 },   // bajo plataforma 3700/470
+        // Tramo 4 (4050-5600)
+        { texture: 'snow_mound',  x: 4120, depth: 6, scale: 1.2 },
+        { texture: 'frozen_lake', x: 4300, depth: 6, scale: 1.3 },
+        { texture: 'ice_cluster', x: 4500, depth: 6 },
+        { texture: 'snow_pine',   x: 4750, depth: 6 },
+        { texture: 'ice_spike',   x: 4950, depth: 6 },
+        { texture: 'snow_rock',   x: 5100, depth: 6 },
+        { texture: 'snowman',     x: 5300, depth: 6 },
+        { texture: 'ice_cluster', x: 5480, depth: 6 },
+        { texture: 'icicles',     x: 4870, y: 608,  originY: 0, depth: 6 },   // bajo plataforma 4830/600
+
+        // ══ PRIMER PLANO (depth 12) — enmarca (silueta fría / hielo) ══
+        { texture: 'snow_pine',   x: 520,  depth: 12, scale: 1.7, alpha: 0.8,  tint: 0x8fa8c0 },
+        { texture: 'ice_cluster', x: 1420, depth: 12, scale: 1.5, alpha: 0.85 },
+        { texture: 'snow_pine',   x: 2500, depth: 12, scale: 1.7, alpha: 0.8,  tint: 0x8fa8c0, flipX: true },
+        { texture: 'ice_cluster', x: 3350, depth: 12, scale: 1.6, alpha: 0.85 },
+        { texture: 'snow_pine',   x: 4750, depth: 12, scale: 1.7, alpha: 0.8,  tint: 0x8fa8c0 },
+        { texture: 'ice_cluster', x: 5280, depth: 12, scale: 1.5, alpha: 0.85 },
     ],
 
     // ── Portal de salida (sobre la plataforma de piedra final) ──

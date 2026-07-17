@@ -280,12 +280,12 @@ export default class BackgroundSystem {
     _buildSnow(W, H, VW, VH) {
         const scene = this.scene;
 
-        // ── Cielo invernal frío ───────────────────────────────
+        // ── Cielo de gran altitud (azul frío arriba → blanco helado) ─
         this._gradientSky('bg_sky_snow', VW, VH, [
-            [0,    0x5a7ba8],
-            [0.4,  0x8fb0d4],
-            [0.72, 0xc4d8ea],
-            [1.0,  0xe9f1f9],
+            [0,    0x3f6790],
+            [0.35, 0x6b93bd],
+            [0.68, 0xa8c8e2],
+            [1.0,  0xe4eef7],
         ]);
 
         // ── Sol pálido con halo (fijo en pantalla) ────────────
@@ -301,43 +301,88 @@ export default class BackgroundSystem {
         }
         scene.add.image(VW - 120, 96, 'sun_snow').setScrollFactor(0).setDepth(1).setAlpha(0.9);
 
-        // ── Montañas nevadas lejanas ──────────────────────────
-        if (!scene.textures.exists('snow_mtn_far')) {
+        // ── Cordillera LEJANA de picos nevados (calima) — scroll 0.12 ─
+        if (!scene.textures.exists('snow_range_far')) {
             const g = scene.make.graphics({ add: false });
+            const rnd = new Phaser.Math.RandomDataGenerator(['snow-range-far']);
+            const peaks = [];
+            let x = -20;
+            while (x < 820) { const pw = rnd.between(90, 170), ph = rnd.between(120, 220); peaks.push([x, pw, ph]); x += pw * 0.7; }
             g.fillStyle(0x9fb6cf, 1);
-            g.fillTriangle(0, 220, 180, 60, 360, 220);
-            g.fillTriangle(220, 220, 420, 40, 620, 220);
-            g.fillTriangle(500, 220, 680, 80, 800, 220);
-            // Cimas nevadas
-            g.fillStyle(0xffffff, 1);
-            g.fillTriangle(180, 60, 210, 104, 150, 104);
-            g.fillTriangle(420, 40, 456, 92, 384, 92);
-            g.fillTriangle(680, 80, 706, 116, 654, 116);
-            g.generateTexture('snow_mtn_far', 800, 220);
+            for (const [px, pw, ph] of peaks) g.fillTriangle(px, 240, px + pw, 240, px + pw / 2, 240 - ph);
+            g.fillStyle(0xffffff, 1);   // cimas nevadas
+            for (const [px, pw, ph] of peaks) {
+                const ax = px + pw / 2, ay = 240 - ph;
+                g.fillTriangle(ax, ay, ax - pw * 0.16, ay + ph * 0.22, ax + pw * 0.16, ay + ph * 0.22);
+            }
+            g.generateTexture('snow_range_far', 800, 240);
             g.destroy();
         }
         for (let i = 0; i < Math.ceil(W / 800) + 1; i++) {
-            scene.add.image(i * 800, H, 'snow_mtn_far')
-                .setOrigin(0, 1).setScrollFactor(0.2).setDepth(1).setAlpha(0.8);
+            scene.add.image(i * 800, H, 'snow_range_far')
+                .setOrigin(0, 1).setScrollFactor(0.12).setDepth(1).setAlpha(0.75);
         }
 
-        // ── Colinas nevadas cercanas ──────────────────────────
-        if (!scene.textures.exists('snow_hills')) {
+        // ── Glaciar/picos MEDIOS con grietas (crevasses) — scroll 0.26 ─
+        if (!scene.textures.exists('snow_glacier_mid')) {
+            const g = scene.make.graphics({ add: false });
+            const rnd = new Phaser.Math.RandomDataGenerator(['snow-glacier']);
+            const peaks = [];
+            let x = -20;
+            while (x < 820) { const pw = rnd.between(130, 220), ph = rnd.between(160, 280); peaks.push([x, pw, ph]); x += pw * 0.62; }
+            g.fillStyle(0x7f9bbd, 1);
+            for (const [px, pw, ph] of peaks) g.fillTriangle(px, 290, px + pw, 290, px + pw / 2, 290 - ph);
+            g.fillStyle(0xeaf3fb, 1);   // mantos de nieve amplios
+            for (const [px, pw, ph] of peaks) {
+                const ax = px + pw / 2, ay = 290 - ph;
+                g.fillTriangle(ax, ay, ax - pw * 0.24, ay + ph * 0.3, ax + pw * 0.24, ay + ph * 0.3);
+            }
+            g.fillStyle(0x5f7ea6, 0.55);   // grietas / sombras azul hielo
+            for (const [px, pw, ph] of peaks) {
+                const ax = px + pw / 2;
+                g.fillRect(ax + rnd.between(-8, 4), 290 - ph + ph * 0.32, 2, ph * 0.42);
+                g.fillRect(ax + rnd.between(4, 14), 290 - ph + ph * 0.45, 2, ph * 0.34);
+            }
+            g.generateTexture('snow_glacier_mid', 800, 290);
+            g.destroy();
+        }
+        for (let i = 0; i < Math.ceil(W / 800) + 1; i++) {
+            scene.add.image(i * 800, H, 'snow_glacier_mid')
+                .setOrigin(0, 1).setScrollFactor(0.26).setDepth(1).setAlpha(0.9);
+        }
+
+        // ── Colinas de nieve cercanas — scroll 0.45 ───────────
+        if (!scene.textures.exists('snow_hills_near')) {
             const g = scene.make.graphics({ add: false });
             g.fillStyle(0xeaf3fb, 1);
-            g.fillEllipse(180, 210, 460, 220);
-            g.fillEllipse(560, 210, 500, 240);
-            g.fillStyle(0xcfe0f0, 0.6);
-            g.fillEllipse(180, 230, 300, 140);
-            g.generateTexture('snow_hills', 800, 210);
+            g.fillEllipse(180, 210, 460, 220); g.fillEllipse(560, 210, 500, 240);
+            g.fillStyle(0xffffff, 0.9);   // crestas iluminadas
+            g.fillEllipse(150, 200, 260, 120); g.fillEllipse(540, 198, 300, 140);
+            g.fillStyle(0xcfe0f0, 0.55);  // sombras frías
+            g.fillEllipse(320, 232, 260, 130);
+            g.generateTexture('snow_hills_near', 800, 210);
             g.destroy();
         }
         for (let i = 0; i < Math.ceil(W / 800) + 1; i++) {
-            scene.add.image(i * 800, H, 'snow_hills')
-                .setOrigin(0, 1).setScrollFactor(0.42).setDepth(2).setAlpha(0.95);
+            scene.add.image(i * 800, H, 'snow_hills_near')
+                .setOrigin(0, 1).setScrollFactor(0.45).setDepth(2).setAlpha(0.95);
         }
 
-        // ── Copos de nieve cayendo (ambiente) ─────────────────
+        // ── Niebla helada baja (ambiente, a la deriva) ────────
+        this._pixel('frost_fog_px', 0xffffff, 8);
+        const fog = scene.add.particles(0, 0, 'frost_fog_px', {
+            x: { min: 0, max: VW },
+            y: { min: VH * 0.55, max: VH },
+            speedX: { min: 8, max: 24 },
+            scale:  { min: 3, max: 7 },
+            lifespan: 8000,
+            frequency: 480,
+            alpha: { min: 0.04, max: 0.12 },
+            tint: [0xdfeefc, 0xffffff, 0xc8dcf0],
+        });
+        fog.setScrollFactor(0).setDepth(2);
+
+        // ── Copos de nieve cayendo (ambiente suave) ───────────
         this._pixel('snow_px', 0xffffff, 5);
         const snow = scene.add.particles(0, -10, 'snow_px', {
             x: { min: 0, max: VW },
@@ -350,6 +395,21 @@ export default class BackgroundSystem {
             tint: [0xffffff, 0xeaf4ff],
         });
         snow.setScrollFactor(0).setDepth(3);
+
+        // ── Ventisca: nieve arrastrada por el viento (rachas rápidas) ─
+        this._pixel('blizzard_px', 0xffffff, 3);
+        const blizzard = scene.add.particles(-10, 0, 'blizzard_px', {
+            x: { min: -10, max: VW * 0.3 },
+            y: { min: 0, max: VH },
+            speedX: { min: 180, max: 330 },   // viento fuerte hacia la derecha
+            speedY: { min: 20, max: 70 },
+            scale:  { min: 0.4, max: 1.0 },
+            lifespan: 2600,
+            frequency: 55,
+            alpha: { min: 0.2, max: 0.6 },
+            tint: [0xffffff, 0xeaf4ff],
+        });
+        blizzard.setScrollFactor(0).setDepth(3);
     }
 
     // ══════════════════════════════════════════════════════════
