@@ -87,51 +87,51 @@ export default {
 
         // ── Sección 1 (x: 0–1000) ────────────────────────
         { x: 100,  y: 650, width: 160,  texture: 'grass' },
-        { x: 350,  y: 520, width: 128,  texture: 'stone' },
+        { x: 350,  y: 520, width: 128,  texture: 'grass' },
         { x: 550,  y: 440, width: 96,   texture: 'grass' },
-        { x: 750,  y: 360, width: 160,  texture: 'stone' },
+        { x: 750,  y: 360, width: 160,  texture: 'grass' },
 
         // ── Sección 2 (x: 1000–1800) ─────────────────────
         { x: 1000, y: 640, width: 192,  texture: 'grass' },
-        { x: 1250, y: 560, width: 96,   texture: 'stone' },
+        { x: 1250, y: 560, width: 96,   texture: 'grass' },
         { x: 1400, y: 480, width: 128,  texture: 'grass' },
-        { x: 1600, y: 400, width: 96,   texture: 'stone' },
+        { x: 1600, y: 400, width: 96,   texture: 'grass' },
 
         // ── Sección 3 — plataformas móviles entre (x: 1800–2400)
         // (definidas en movingPlatforms)
 
         // ── Sección 4 (x: 2400–3300) ─────────────────────
-        { x: 2400, y: 620, width: 160,  texture: 'stone' },
+        { x: 2400, y: 620, width: 160,  texture: 'grass' },
         { x: 2600, y: 540, width: 128,  texture: 'grass' },
-        { x: 2800, y: 460, width: 192,  texture: 'stone' },
+        { x: 2800, y: 460, width: 192,  texture: 'grass' },
         { x: 3000, y: 560, width: 160,  texture: 'grass' },
 
         // ── Sección 5 — puente roto (x: 3300–4000) ───────
         // Plataformas pequeñas y separadas, obliga saltos precisos
-        { x: 3300, y: 680, width: 64,   texture: 'stone' },
-        { x: 3430, y: 600, width: 64,   texture: 'stone' },
+        { x: 3300, y: 680, width: 64,   texture: 'grass' },
+        { x: 3430, y: 600, width: 64,   texture: 'grass' },
         { x: 3560, y: 520, width: 64,   texture: 'grass' },
-        { x: 3680, y: 460, width: 64,   texture: 'stone' },
+        { x: 3680, y: 460, width: 64,   texture: 'grass' },
         { x: 3780, y: 540, width: 64,   texture: 'grass' },
-        { x: 3880, y: 620, width: 96,   texture: 'stone' },
+        { x: 3880, y: 620, width: 96,   texture: 'grass' },
         { x: 3950, y: 500, width: 96,   texture: 'grass' },
 
         // ── Sección 6 — torre ascendente (x: 4000–4700) ──
         // Plataformas en zigzag que suben hasta y=200
         { x: 4050, y: 680, width: 128,  texture: 'grass' },
-        { x: 4200, y: 580, width: 96,   texture: 'stone' },
+        { x: 4200, y: 580, width: 96,   texture: 'grass' },
         { x: 4100, y: 480, width: 96,   texture: 'grass' },
-        { x: 4280, y: 380, width: 128,  texture: 'stone' },
+        { x: 4280, y: 380, width: 128,  texture: 'grass' },
         { x: 4150, y: 280, width: 96,   texture: 'grass' },
-        { x: 4350, y: 200, width: 160,  texture: 'stone' },
+        { x: 4350, y: 200, width: 160,  texture: 'grass' },
         { x: 4520, y: 280, width: 96,   texture: 'grass' },
-        { x: 4600, y: 380, width: 128,  texture: 'stone' },
+        { x: 4600, y: 380, width: 128,  texture: 'grass' },
 
         // ── Sección 7 — tramo final (x: 4700–5600) ───────
         { x: 4750, y: 480, width: 192,  texture: 'grass' },
-        { x: 4980, y: 560, width: 128,  texture: 'stone' },
+        { x: 4980, y: 560, width: 128,  texture: 'grass' },
         { x: 5150, y: 460, width: 160,  texture: 'grass' },
-        { x: 5330, y: 380, width: 128,  texture: 'stone' },
+        { x: 5330, y: 380, width: 128,  texture: 'grass' },
 
         // ── Plataforma del portal ─────────────────────────
         { x: 5400, y: 300, width: 192,  texture: 'grass' },
