@@ -20,8 +20,8 @@ export default {
         segments: [
             { x: 0,    width: 1500 }, // G1  0..1500
             { x: 1650, width: 950  }, // G2  1650..2600   (AGUJERO 1: 1500..1650)
-            { x: 2750, width: 1100 }, // G3  2750..3850   (AGUJERO 2: 2600..2750)
-            { x: 4130, width: 1470 }, // G4  4130..5600   (GRIETA 3: 3850..4130, se cruza en móvil)
+            { x: 2750, width: 1150 }, // G3  2750..3900   (AGUJERO 2: 2600..2750)
+            { x: 4050, width: 1550 }, // G4  4050..5600   (AGUJERO 3: 3900..4050, se salta)
         ],
     },
 
@@ -54,18 +54,16 @@ export default {
         { x: 5360, y: 408, width: 180, texture: 'stone' },  // plataforma del portal (con agarre)
     ],
 
-    // ── Plataforma móvil — ÚNICO paso sobre la GRIETA 3 (3850..4130) ──
-    // La grieta es demasiado ancha para saltarla: hay que montarse en la
-    // plataforma de hielo y cruzar con ella. Sin ella no se puede pasar.
-    movingPlatforms: [
-        { x: 3945, y: 690, width: 96, config: { axis: 'x', range: 130, speed: 60 } },
-    ],
+    // ── Plataformas móviles ───────────────────────────────────
+    // Ninguna: los agujeros se cruzan de un salto. (Las móviles con sentido —
+    // único paso sobre un hueco— están en el nivel 5, sobre la lava.)
+    movingPlatforms: [],
 
     // ── Checkpoints (tras cada agujero) ──────────────────────
     checkpoints: [
         { x: 1700, y: 700 }, // tras el agujero 1
         { x: 2800, y: 700 }, // tras el agujero 2
-        { x: 4180, y: 700 }, // tras la grieta 3 (en G4, 4130..5600)
+        { x: 4110, y: 700 }, // tras el agujero 3
     ],
 
     // ── Monedas ──────────────────────────────────────────────
@@ -81,8 +79,8 @@ export default {
         [2640, 620], [2675, 640], [2710, 620],
         // Sección 3
         [2890, 610], [3090, 520], [3320, 430], [3530, 520], [3730, 430],
-        // Grieta 3 (se recogen montado en la plataforma móvil)
-        [3900, 650], [3990, 650], [4080, 650],
+        // Agujero 3 (se recogen en el salto)
+        [3940, 620], [3975, 640], [4010, 620],
         // Sección 4 (ascenso)
         [4700, 632], [4870, 560], [5040, 488], [5220, 428], [5420, 368],
     ],

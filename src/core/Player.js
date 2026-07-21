@@ -49,6 +49,7 @@ class Player {
     this.wasOnGround    = false;
     this.isJumping      = false;  // para salto variable
     this.groundSurface  = 'normal'; // superficie bajo los pies (detección genérica)
+    this.controlInversion = null;   // mecánica opcional (ver mechanics/ControlInversion.js)
     this.walkTimer      = 0;      // ciclo de caminado
     this.walkFrame      = 0;      // 0 → walk_a, 1 → walk_b
     this.currentFrame   = '';     // textura activa (evita setTexture redundante)
@@ -255,8 +256,12 @@ class Player {
     const surf  = surfacePhysics(this.groundSurface);
     const accel = onGround ? surf.accel : this.ACCELERATION;
 
-    const leftDown  = this.cursors.left.isDown  || this.wasdKeys.left.isDown;
-    const rightDown = this.cursors.right.isDown || this.wasdKeys.right.isDown;
+    let leftDown  = this.cursors.left.isDown  || this.wasdKeys.left.isDown;
+    let rightDown = this.cursors.right.isDown || this.wasdKeys.right.isDown;
+    // Inversión de controles (si está activa): intercambia izquierda↔derecha.
+    if (this.controlInversion) {
+      [leftDown, rightDown] = this.controlInversion.apply(leftDown, rightDown);
+    }
 
     if (leftDown) {
       body.setAccelerationX(-accel);
@@ -568,6 +573,11 @@ class Player {
    */
   setGroundSurface(surface) {
     this.groundSurface = surface || 'normal';
+  }
+
+  /** Activa (o desactiva con null) la inversión de controles. Desacoplado. */
+  setControlInversion(inversion) {
+    this.controlInversion = inversion || null;
   }
 
   // ─────────────────────────────────────────────────────────

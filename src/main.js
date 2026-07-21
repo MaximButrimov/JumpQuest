@@ -1,8 +1,10 @@
 import PlatformManager from './core/Platform.js';
 import Player from './core/Player.js';
+import Boss from './core/Boss.js';
 import Level from './levels/Level.js';
 import Level1Data from './levels/Level1.js';
 import MapScene from './map/MapScene.js';
+import ControlInversion from './mechanics/ControlInversion.js';
 import { buildAllTextures } from './textures/index.js';
 
 /**
@@ -942,6 +944,241 @@ class WinScene extends Phaser.Scene {
 }
 
 // ══════════════════════════════════════════════════════════════
+//  ESCENA: SALA DEL JEFE (combate final)
+//
+//  Sala independiente a la que se entra por la puerta del final del nivel 5.
+//  Combate: el jugador daña al jefe saltándole encima; el jefe hace patrones
+//  aleatorios de saltos y CADA salto alterna la INVERSIÓN DE CONTROLES (mecánica
+//  desacoplada, ver mechanics/ControlInversion.js). Al derrotarlo aparece el
+//  portal que completa el nivel.
+// ══════════════════════════════════════════════════════════════
+
+class BossScene extends Phaser.Scene {
+  constructor() { super({ key: 'BossScene' }); }
+
+  init(data) {
+    this._score     = data.score     || 0;
+    this._levelId   = data.levelId   || 'level_5';
+    this._levelName = data.levelName || '1-5';
+    this._levelData = data.levelData || null;
+    this._won = false;
+    this._bossDefeated = false;
+  }
+
+  create() {
+    const W = this.scale.width, H = this.scale.height;
+    this.arenaW = W; this.arenaH = H;
+
+    this.physics.world.setBounds(0, 0, W, H);
+    this.physics.world.setBoundsCollision(true, true, true, true);   // paredes sólidas
+    this.physics.world.gravity.y = 0;
+
+    buildAllTextures(this);
+    Player.buildFrames(this);
+
+    this._buildArena(W, H);
+
+    // ── Inversión de controles (mecánica desacoplada) ──
+    this.controlInversion = new ControlInversion();
+    this.controlInversion.onChange((inv) => this._onInversionChanged(inv));
+
+    // ── Jugador ──
+    this.player = new Player(this, 110, H - 100);
+    this.player.score = this._score;                 // arrastra la puntuación del nivel
+    this.player.setControlInversion(this.controlInversion);
+    this.physics.add.collider(this.player.gameObject, this.solids);
+
+    // ── Jefe ──  (el SALTO es solo un disparador; no conoce la inversión)
+    this.boss = new Boss(this, W - 150, H - 120, {
+      hp: 5,
+      onJump:     () => this.controlInversion.toggle(),
+      onHpChange: (hp, max) => this._updateBossBar(hp, max),
+      onDefeated: () => this._onBossDefeated(),
+    });
+    this.physics.add.collider(this.boss.sprite, this.solids);
+
+    // ── Combate: pisar al jefe / recibir daño lateral ──
+    this.physics.add.overlap(this.player.gameObject, this.boss.sprite, () => this._playerHitsBoss(), null, this);
+
+    this._buildUI(W, H);
+    this.events.on('playerDied', () => this._onPlayerDied());
+
+    this._showIntro(W, H);
+    this.cameras.main.fadeIn(500, 0, 0, 0);
+  }
+
+  update(time, delta) {
+    if (this.player.isAlive) this.player.update(delta);
+
+    // Victoria: entrar en el portal tras derrotar al jefe
+    if (this._bossDefeated && this.victoryPortal && !this._won && this.player.isAlive) {
+      if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.victoryPortal.x, this.victoryPortal.y) < 55) {
+        this._won = true;
+        this._winLevel();
+      }
+    }
+  }
+
+  // ── Arena ──
+  _buildArena(W, H) {
+    const bg = this.add.graphics().setDepth(0);
+    bg.fillGradientStyle(0x1a0d0a, 0x1a0d0a, 0x6e2410, 0x8a2f10, 1);
+    bg.fillRect(0, 0, W, H);
+
+    this._pixelTex('boss_ember', 0xffffff, 4);
+    this.add.particles(0, H + 6, 'boss_ember', {
+      x: { min: 0, max: W }, speedY: { min: -60, max: -20 }, speedX: { min: -14, max: 14 },
+      scale: { min: 0.3, max: 1.0 }, lifespan: 4200, frequency: 90,
+      alpha: { min: 0.3, max: 0.8 }, tint: [0xff6a20, 0xffb020, 0xff5a1e], blendMode: 'ADD'
+    }).setDepth(1);
+    this._pixelTex('boss_ash', 0xffffff, 4);
+    this.add.particles(0, -10, 'boss_ash', {
+      x: { min: 0, max: W }, speedY: { min: 20, max: 45 }, speedX: { min: -10, max: 10 },
+      scale: { min: 0.3, max: 0.9 }, lifespan: 8000, frequency: 220,
+      alpha: { min: 0.15, max: 0.4 }, tint: [0x3a3632, 0x555049]
+    }).setDepth(1);
+
+    // Sólidos: suelo + dos repisas. Visual = TileSprite; cuerpo = estático invisible.
+    this.solids = this.physics.add.staticGroup();
+    if (!this.textures.exists('hazard_px')) {
+      const g = this.make.graphics({ add: false });
+      g.fillStyle(0xffffff); g.fillRect(0, 0, 1, 1);
+      g.generateTexture('hazard_px', 1, 1); g.destroy();
+    }
+    const addSolid = (x, y, w, h) => {
+      this.add.tileSprite(x, y, w, h, 'ground_volcanic').setOrigin(0, 0).setDepth(5);
+      const b = this.solids.create(x, y, 'hazard_px').setOrigin(0, 0).setVisible(false);
+      b.setDisplaySize(w, h); b.refreshBody();
+      return b;
+    };
+    addSolid(0, H - 46, W, 60);            // suelo
+    addSolid(60, H - 168, 150, 22);        // repisa izquierda
+    addSolid(W - 210, H - 168, 150, 22);   // repisa derecha
+  }
+
+  _pixelTex(key, color, size) {
+    if (this.textures.exists(key)) return;
+    const g = this.make.graphics({ add: false });
+    g.fillStyle(color); g.fillCircle(size / 2, size / 2, size / 2);
+    g.generateTexture(key, size, size); g.destroy();
+  }
+
+  // ── UI (barra de vida del jefe + vidas) ──
+  _buildUI(W, H) {
+    this.add.text(W / 2, 14, 'GUARDIÁN DEL VOLCÁN', {
+      fontFamily: "'Press Start 2P'", fontSize: '11px', color: '#ffcf5a', stroke: '#8a1f0a', strokeThickness: 3
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(20);
+    this.bossBarBg = this.add.graphics().setScrollFactor(0).setDepth(20);
+    this.bossBarBg.fillStyle(0x000000, 0.55); this.bossBarBg.fillRoundedRect(W / 2 - 162, 30, 324, 18, 4);
+    this.bossBar = this.add.graphics().setScrollFactor(0).setDepth(21);
+    this._updateBossBar(this.boss.maxHp, this.boss.maxHp);
+
+    this.livesText = this.add.text(14, 12, '❤ × 3', {
+      fontFamily: "'Press Start 2P'", fontSize: '12px', color: '#ff5555'
+    }).setScrollFactor(0).setDepth(20);
+    this.events.on('livesChanged', (lives) => this.livesText.setText('❤ × ' + lives));
+  }
+
+  _updateBossBar(hp, max) {
+    const W = this.arenaW;
+    this.bossBar.clear();
+    const w = Math.max(0, 320 * (hp / max));
+    this.bossBar.fillStyle(0xff3020); this.bossBar.fillRoundedRect(W / 2 - 160, 32, w, 14, 3);
+  }
+
+  // ── Combate ──
+  _playerHitsBoss() {
+    if (!this.boss.isAlive || this.boss.isInvincible || this.player.isInvincible || !this.player.isAlive) return;
+    const pBody = this.player.body, bBody = this.boss.sprite.body;
+    const descending    = pBody.velocity.y > 0;
+    const prevFeetY     = pBody.prev.y + pBody.height;
+    const cameFromAbove = prevFeetY <= bBody.top + 10;
+    if (descending && cameFromAbove) {
+      this.boss.hit();
+      pBody.setVelocityY(-360);
+      this._fx(this.boss.x, bBody.top, 0xffb020);
+      if (this.sound.get('sfx_hit')) this.sound.play('sfx_hit', { volume: 0.4, detune: 200 });
+    } else {
+      this.player.loseLife();
+    }
+  }
+
+  _fx(x, y, tint) {
+    if (!this.textures.exists('colfx_px')) {
+      const g = this.make.graphics({ add: false });
+      g.fillStyle(0xffffff); g.fillRect(0, 0, 4, 4);
+      g.generateTexture('colfx_px', 4, 4); g.destroy();
+    }
+    const em = this.add.particles(x, y, 'colfx_px', {
+      speed: { min: 60, max: 160 }, angle: { min: 0, max: 360 }, scale: { start: 1, end: 0 },
+      lifespan: 400, quantity: 10, tint
+    }).setDepth(15);
+    em.explode(10);
+    this.time.delayedCall(500, () => em.destroy());
+  }
+
+  // ── Feedback de inversión de controles ──
+  _onInversionChanged(inverted) {
+    if (inverted) {
+      this.cameras.main.flash(200, 120, 40, 160);
+      if (!this.invLabel) {
+        this.invLabel = this.add.text(this.arenaW / 2, 62, '¡CONTROLES INVERTIDOS!', {
+          fontFamily: "'Press Start 2P'", fontSize: '10px', color: '#c07bff', stroke: '#2a0a3a', strokeThickness: 3
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(22);
+      }
+      this.invLabel.setVisible(true).setAlpha(1);
+    } else if (this.invLabel) {
+      this.invLabel.setVisible(false);
+    }
+  }
+
+  // ── Fin del combate ──
+  _onBossDefeated() {
+    this._bossDefeated = true;
+    this.controlInversion.reset();
+    this.victoryPortal = this.add.image(this.arenaW / 2, this.arenaH - 92, 'portal').setDepth(6);
+    this.tweens.add({ targets: this.victoryPortal, scaleX: 1.15, scaleY: 1.1, alpha: 0.7, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.add.text(this.arenaW / 2, 118, '¡JEFE DERROTADO!', {
+      fontFamily: "'Press Start 2P'", fontSize: '16px', color: '#f7c948', stroke: '#c8820a', strokeThickness: 4
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(22);
+    this.add.text(this.arenaW / 2, 146, 'Entra en el portal', {
+      fontFamily: "'Press Start 2P'", fontSize: '9px', color: '#ffffff'
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(22);
+  }
+
+  _onPlayerDied() {
+    this.cameras.main.fade(600, 80, 0, 0);
+    this.time.delayedCall(650, () => {
+      this.scene.stop();
+      this.scene.start('GameOverScene', {
+        score: this.player.score, levelId: this._levelId, levelName: this._levelName, levelData: this._levelData
+      });
+    });
+  }
+
+  _winLevel() {
+    if (this.sound.get('sfx_portal')) this.sound.play('sfx_portal', { volume: 0.7 });
+    this.cameras.main.flash(300, 255, 220, 120);
+    this.time.delayedCall(500, () => {
+      this.cameras.main.fade(500, 0, 0, 0);
+      this.time.delayedCall(550, () => {
+        this.scene.stop();
+        this.scene.start('WinScene', {
+          score: this.player.score, levelId: this._levelId, levelName: this._levelName, levelData: this._levelData
+        });
+      });
+    });
+  }
+
+  _showIntro(W, H) {
+    const txt = this.add.text(W / 2, H / 2 - 50, 'SALA DEL JEFE\n¡Salta sobre él para dañarlo!', {
+      fontFamily: "'Press Start 2P'", fontSize: '12px', color: '#ffcf5a', align: 'center', stroke: '#8a1f0a', strokeThickness: 3
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(22);
+    this.tweens.add({ targets: txt, alpha: 0, delay: 2600, duration: 500, onComplete: () => txt.destroy() });
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
 //  ESCENA PRINCIPAL DE JUEGO
 // ══════════════════════════════════════════════════════════════
 
@@ -1165,17 +1402,21 @@ class GameScene extends Phaser.Scene {
     if (this._portalUsed) return;
     this._portalUsed = true;
 
+    // Si el "portal" es en realidad la PUERTA DEL JEFE (data.exit.boss), en vez
+    // de completar el nivel se entra en la sala del jefe (BossScene).
+    const toBoss = !!(this._levelData.exit && this._levelData.exit.boss);
+
     if (this.sound.get('sfx_portal')) {
       this.sound.play('sfx_portal', { volume: 0.7 });
     }
 
-    this.cameras.main.flash(300, 100, 200, 255);
+    this.cameras.main.flash(300, toBoss ? 220 : 100, toBoss ? 70 : 200, toBoss ? 10 : 255);
     this.time.delayedCall(600, () => {
-      this.cameras.main.fade(500, 0, 0, 50);
+      this.cameras.main.fade(500, toBoss ? 30 : 0, 0, toBoss ? 0 : 50);
       this.time.delayedCall(550, () => {
         this.scene.stop('HUDScene');
         this.scene.stop();
-        this.scene.start('WinScene', {
+        this.scene.start(toBoss ? 'BossScene' : 'WinScene', {
           score:     this.player.score,
           levelId:   this._levelId,
           levelName: this._levelName,
@@ -1247,7 +1488,8 @@ const config = {
     HUDScene,
     PauseScene,
     GameOverScene,
-    WinScene
+    WinScene,
+    BossScene
   ]
 };
 

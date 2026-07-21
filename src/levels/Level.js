@@ -461,6 +461,13 @@ export default class Level {
             'portal'
         ).setDepth(6);
 
+        // Puerta del jefe: el visual es la decoración `boss_gate`; el portal azul
+        // queda invisible y solo actúa de disparador (checkPortal → BossScene).
+        if (this.data.exit && this.data.exit.boss) {
+            this.portal.setVisible(false);
+            return;
+        }
+
         // Pulso
         scene.tweens.add({
             targets:  this.portal,

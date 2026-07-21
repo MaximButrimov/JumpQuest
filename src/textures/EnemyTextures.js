@@ -26,6 +26,38 @@ export default class EnemyTextures {
             g.fillStyle(0xcfcabb); g.fillRect(9, 28, 1, 6); g.fillRect(14, 28, 1, 6);
         });
 
+        // Jefe — esqueleto con ARMADURA (casco con cuernos, coraza, hombreras) (40×48)
+        defineTexture(scene, 'enemy_boss', 40, 48, (g) => {
+            // Aura de fuego (detrás)
+            g.fillStyle(0xff5a1e, 0.4);  g.fillTriangle(20, 2, 5, 26, 35, 26);
+            g.fillStyle(0xff8a2a, 0.35); g.fillTriangle(8, 10, 3, 28, 14, 28);
+            g.fillStyle(0xff8a2a, 0.35); g.fillTriangle(32, 10, 26, 28, 37, 28);
+            // Cuernos del casco
+            g.fillStyle(0x3a3e46); g.fillTriangle(9, 8, 4, 0, 12, 8); g.fillTriangle(31, 8, 36, 0, 28, 8);
+            // Casco
+            g.fillStyle(0x4a4e58); g.fillRect(9, 6, 22, 14);
+            g.fillStyle(0x5e626c); g.fillRect(9, 6, 22, 3);          // brillo
+            g.fillStyle(0x2e323a); g.fillRect(9, 17, 22, 3);         // sombra
+            // Visera oscura + ojos ardientes
+            g.fillStyle(0x140f0c); g.fillRect(12, 11, 16, 6);
+            g.fillStyle(0xff6a20); g.fillCircle(16, 14, 2); g.fillCircle(24, 14, 2);
+            g.fillStyle(0xffb020); g.fillCircle(16, 14, 1); g.fillCircle(24, 14, 1);
+            // Hombreras
+            g.fillStyle(0x3a3e46); g.fillEllipse(8, 24, 12, 9); g.fillEllipse(32, 24, 12, 9);
+            g.fillStyle(0x51555f); g.fillEllipse(7, 22, 7, 4); g.fillEllipse(31, 22, 7, 4);
+            // Coraza
+            g.fillStyle(0x4a4e58); g.fillRect(10, 21, 20, 17);
+            g.fillStyle(0x5e626c); g.fillRect(10, 21, 20, 3);
+            g.fillStyle(0x2e323a); g.fillRect(10, 35, 20, 3);
+            g.fillStyle(0xe8e4d8); g.fillRect(15, 25, 10, 2); g.fillRect(15, 29, 10, 2); // costillas expuestas
+            // Grieta incandescente en la coraza
+            g.fillStyle(0xff5a1e); g.fillRect(19, 21, 2, 15);
+            g.fillStyle(0xffb020); g.fillRect(19, 25, 2, 5);
+            // Piernas (hueso + botas de armadura)
+            g.fillStyle(0xe8e4d8); g.fillRect(14, 38, 4, 8); g.fillRect(22, 38, 4, 8);
+            g.fillStyle(0x3a3e46); g.fillRect(12, 44, 7, 4); g.fillRect(21, 44, 7, 4);
+        });
+
 
         // Slime
         defineTexture(scene, 'enemy_slime', 32, 28, (g) => {

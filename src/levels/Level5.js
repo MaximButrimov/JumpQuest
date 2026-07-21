@@ -218,6 +218,8 @@ export default {
         { texture: 'burnt_tree',    x: 5250,  depth: 12, scale: 1.6, alpha: 0.8, tint: 0x3a2018 },
     ],
 
-    // ── Salida — puerta de acceso al jefe (por ahora, portal normal) ──
-    exit: { x: 5500, y: 700 },
+    // ── Salida — PUERTA DEL JEFE: al cruzarla se entra en la sala del jefe ──
+    // (boss: true → GameScene lanza BossScene en vez de completar el nivel).
+    // El visual es la decoración `boss_gate`; el portal queda invisible.
+    exit: { x: 5500, y: 700, boss: true },
 };
