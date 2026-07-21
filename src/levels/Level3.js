@@ -77,10 +77,10 @@ export default {
     ],
 
     // ── Plataformas móviles ──────────────────────────────────
-    movingPlatforms: [
-        { x: 4030, y: 600, width: 64, config: { axis: 'y', range: 90,  speed: 55 } },
-        { x: 2050, y: 660, width: 64, config: { axis: 'x', range: 80,  speed: 70 } },
-    ],
+    // Ninguna: los cruces del nivel son puentes temporizados, saltos sobre
+    // agujeros y la piedra intermedia. Las móviles anteriores eran evitables
+    // (una incluso estaba sobre suelo sólido), así que se quitaron.
+    movingPlatforms: [],
 
     // ── Puentes suspendidos temporizados (sobre vacío mortal) ──
     bridges: [

@@ -36,8 +36,7 @@ export default {
         { x: 420,  y: 580, width: 96,  texture: 'volcanic' },
         { x: 620,  y: 640, width: 128, texture: 'volcanic' },
         { x: 780,  y: 560, width: 96,  texture: 'volcanic' },
-        // Pozo 1 (900..1080)
-        { x: 940,  y: 640, width: 80,  texture: 'volcanic' },
+        // Pozo 1 (900..1080) — se cruza SOLO en la plataforma móvil
         // Sección 2 (1080..1900)
         { x: 1150, y: 660, width: 128, texture: 'volcanic' },
         { x: 1350, y: 580, width: 96,  texture: 'volcanic' },
@@ -51,9 +50,7 @@ export default {
         { x: 2380, y: 560, width: 96,  texture: 'volcanic' },
         { x: 2560, y: 480, width: 128, texture: 'volcanic' },
         { x: 2760, y: 560, width: 96,  texture: 'volcanic' },
-        // Pozo 3 (2900..3120) — cruce con plataforma móvil
-        { x: 2940, y: 640, width: 64,  texture: 'volcanic' },
-        { x: 3060, y: 640, width: 64,  texture: 'volcanic' },
+        // Pozo 3 (2900..3120) — se cruza SOLO en la plataforma móvil
         // Sección 4 (3120..3900)
         { x: 3200, y: 620, width: 128, texture: 'volcanic' },
         { x: 3400, y: 520, width: 96,  texture: 'volcanic' },
@@ -67,18 +64,19 @@ export default {
         { x: 4380, y: 540, width: 96,  texture: 'volcanic' },
         { x: 4560, y: 460, width: 128, texture: 'volcanic' },
         { x: 4740, y: 560, width: 96,  texture: 'volcanic' },
-        // Pozo 5 (4900..5080) — ascensor vertical
-        { x: 4930, y: 640, width: 80,  texture: 'volcanic' },
+        // Pozo 5 (4900..5080) — se cruza SOLO en la plataforma móvil
         // Sección 6 — ascenso final a la puerta del jefe (5080..5600)
         { x: 5160, y: 660, width: 96,  texture: 'volcanic' },
         { x: 5320, y: 600, width: 96,  texture: 'volcanic' },
     ],
 
-    // ── Plataformas móviles (sobre los pozos) ─────────────────
+    // ── Plataformas móviles — ÚNICO paso sobre los pozos 1, 3 y 5 ─────
+    // Sin estáticas en esos pozos: hay que montarse en la plataforma y cruzar
+    // la lava con ella. Altura abordable desde el borde del suelo (y=690).
     movingPlatforms: [
-        { x: 1000, y: 600, width: 80, config: { axis: 'x', range: 70, speed: 70 } }, // pozo 1
-        { x: 3000, y: 600, width: 96, config: { axis: 'x', range: 90, speed: 65 } }, // pozo 3
-        { x: 5000, y: 560, width: 64, config: { axis: 'y', range: 80, speed: 55 } }, // pozo 5
+        { x: 945,  y: 690, width: 96, config: { axis: 'x', range: 95,  speed: 60 } }, // pozo 1
+        { x: 2955, y: 690, width: 96, config: { axis: 'x', range: 110, speed: 65 } }, // pozo 3
+        { x: 4945, y: 690, width: 96, config: { axis: 'x', range: 95,  speed: 65 } }, // pozo 5
     ],
 
     // ── Checkpoints (tras cada pozo de lava) ─────────────────
@@ -94,24 +92,24 @@ export default {
     coins: [
         // Sección 1
         [230, 620], [440, 540], [650, 600], [800, 520],
-        // Pozo 1
-        [930, 600], [980, 620], [1030, 600],
+        // Pozo 1 (se recogen montado en la móvil)
+        [930, 650], [990, 640], [1050, 650],
         // Sección 2
         [1180, 620], [1370, 540], [1550, 460], [1740, 540],
         // Pozo 2
         [1940, 580], [2030, 520],
         // Sección 3
         [2210, 600], [2400, 520], [2590, 440], [2780, 520],
-        // Pozo 3
-        [2960, 600], [3010, 560], [3080, 600],
+        // Pozo 3 (se recogen montado en la móvil)
+        [2950, 650], [3010, 640], [3070, 650],
         // Sección 4
         [3230, 580], [3420, 480], [3610, 400], [3780, 500],
         // Pozo 4
         [3940, 580], [4030, 520],
         // Sección 5
         [4210, 600], [4400, 500], [4590, 420], [4760, 520],
-        // Pozo 5
-        [4930, 600], [5000, 520], [5060, 600],
+        // Pozo 5 (se recogen montado en la móvil)
+        [4930, 650], [4990, 640], [5050, 650],
         // Sección 6 — hacia la puerta
         [5180, 620], [5340, 560], [5460, 660], [5500, 660],
     ],

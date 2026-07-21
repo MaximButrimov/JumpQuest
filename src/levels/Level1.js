@@ -97,8 +97,10 @@ export default {
         { x: 1400, y: 480, width: 128,  texture: 'grass' },
         { x: 1600, y: 400, width: 96,   texture: 'grass' },
 
-        // ── Sección 3 — plataformas móviles entre (x: 1800–2400)
-        // (definidas en movingPlatforms)
+        // ── Sección 3 — ruta elevada de plataformas (x: 1800–2400) ─
+        { x: 1800, y: 500, width: 128,  texture: 'grass' },
+        { x: 2050, y: 420, width: 96,   texture: 'grass' },
+        { x: 2200, y: 540, width: 96,   texture: 'grass' },
 
         // ── Sección 4 (x: 2400–3300) ─────────────────────
         { x: 2400, y: 620, width: 160,  texture: 'grass' },
@@ -138,14 +140,9 @@ export default {
     ],
 
     // ── Plataformas móviles ───────────────────────────────────
-    // Sección 3 (x: 1800–2400) es una TRAVESÍA dedicada de móviles (sin
-    // estáticas): aquí sí aportan. Las móviles sueltas de otras secciones se
-    // quitaron por redundantes (las estáticas contiguas ya dan el paso).
-    movingPlatforms: [
-        { x: 1800, y: 500, width: 128, config: { axis: 'x', range: 120, speed: 55 } },
-        { x: 2050, y: 420, width: 96,  config: { axis: 'y', range: 80,  speed: 45 } },
-        { x: 2200, y: 540, width: 96,  config: { axis: 'x', range: 100, speed: 70 } },
-    ],
+    // Ninguna: con suelo continuo, una móvil siempre es evitable (no aporta).
+    // La antigua Sección 3 pasó a ser una ruta de plataformas ESTÁTICAS.
+    movingPlatforms: [],
 
     coins: [
         // Sección 1

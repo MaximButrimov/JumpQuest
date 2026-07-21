@@ -107,8 +107,11 @@ export default {
         { x: 1480, y: 380, width: 128,  texture: 'stone' },
         { x: 1650, y: 300, width: 96,   texture: 'stone' },
 
-        // ── Sección 3 — Plataformas móviles (x: 1800–2500)
-        // (definidas en movingPlatforms)
+        // ── Sección 3 — ruta elevada de plataformas (x: 1800–2500) ─
+        { x: 1830, y: 540, width: 96,   texture: 'stone' },
+        { x: 2010, y: 440, width: 96,   texture: 'stone' },
+        { x: 2200, y: 560, width: 64,   texture: 'stone' },
+        { x: 2370, y: 440, width: 96,   texture: 'stone' },
 
         // ── Sección 4 — Laberinto de estalactitas (x: 2500–3300)
         { x: 2520, y: 660, width: 96,   texture: 'stone' },
@@ -145,14 +148,9 @@ export default {
     ],
 
     // ── Plataformas móviles ───────────────────────────────────
-    // Sección 3 (x: 1800–2500) es el NÚCLEO de móviles (sin estáticas): aquí
-    // aportan. Las móviles sueltas de otras secciones se quitaron por redundantes.
-    movingPlatforms: [
-        { x: 1830, y: 540, width: 96,  config: { axis: 'x', range: 110, speed: 60 } },
-        { x: 2010, y: 440, width: 96,  config: { axis: 'y', range:  90, speed: 50 } },
-        { x: 2200, y: 560, width: 64,  config: { axis: 'x', range:  95, speed: 75 } },
-        { x: 2370, y: 440, width: 96,  config: { axis: 'y', range: 100, speed: 55 } },
-    ],
+    // Ninguna: con suelo continuo, una móvil siempre es evitable. La antigua
+    // Sección 3 pasó a ser una ruta de plataformas ESTÁTICAS.
+    movingPlatforms: [],
 
     coins: [
         // Sección 1
