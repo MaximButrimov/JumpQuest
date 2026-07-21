@@ -16,13 +16,13 @@ import TerrainTextures from '../textures/TerrainTextures.js';
 
 class PlatformManager {
   // Mapeo tipo de superficie (dato del nivel) → clave de textura de tile.
-  // Lo usan las plataformas (createStatic):  grass · stone · ice.
-  static SURFACE_TEX = { stone: 'platform_stone', ice: 'platform_ice', grass: 'platform_tile' };
+  // Lo usan las plataformas (createStatic):  grass · stone · ice · volcanic.
+  static SURFACE_TEX = { stone: 'platform_stone', ice: 'platform_ice', grass: 'platform_tile', volcanic: 'platform_volcanic' };
 
   // Mapeo tipo de terreno → textura de BLOQUE de suelo (superficie + cuerpo
   // macizo). Lo usa createGround(). Añadir un bioma = añadir una entrada aquí
   // (y su textura ground_X en TerrainTextures). Totalmente escalable.
-  static GROUND_TEX = { grass: 'ground_grass', stone: 'ground_stone', ice: 'ground_ice' };
+  static GROUND_TEX = { grass: 'ground_grass', stone: 'ground_stone', ice: 'ground_ice', volcanic: 'ground_volcanic' };
 
   /** @param {Phaser.Scene} scene */
   constructor(scene) {

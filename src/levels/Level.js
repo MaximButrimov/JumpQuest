@@ -51,6 +51,15 @@ export default class Level {
                 return 'snow_tuft';
             },
         },
+        // Volcán: roca chamuscada con alguna brasa sobre la roca volcánica.
+        volcano: {
+            textures: ['volcanic'], seed: 'volcano-scatter', step: [42, 80], scale: [0.7, 1.05], depth: 6,
+            pick: (rnd) => {
+                const roll = rnd.frac();
+                if (roll < 0.16) return 'ember_bit';
+                return 'char_rock';
+            },
+        },
     };
 
     constructor(scene, platformManager, data) {

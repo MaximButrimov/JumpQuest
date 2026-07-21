@@ -15,6 +15,8 @@
  *    · 'ruins'  → ciudad desértica postapocalíptica: cielo polvoriento,
  *                 skyline de rascacielos rotos, dunas, arena arrastrada.
  *    · 'snow'   → escenario nevado: cielo frío, montañas, nevada.
+ *    · 'volcano'→ volcán activo: cielo de lava, volcanes en erupción,
+ *                 ríos de lava en los pozos, ceniza, brasas y humo.
  *
  *  Para añadir un tema nuevo: crea un _buildX() y regístralo en
  *  el switch de build(). Usa claves de textura con sufijo propio.
@@ -40,6 +42,8 @@ export default class BackgroundSystem {
             this._buildRuins(W, H, VW, VH);
         } else if (theme === 'snow') {
             this._buildSnow(W, H, VW, VH);
+        } else if (theme === 'volcano') {
+            this._buildVolcano(W, H, VW, VH);
         } else {
             this._buildForest(W, H, VW, VH);
         }
@@ -782,5 +786,143 @@ export default class BackgroundSystem {
         }
         scene.add.image(VW / 2, VH / 2, 'cave_vignette')
             .setScrollFactor(0).setDepth(4).setBlendMode(Phaser.BlendModes.MULTIPLY);
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  TEMA: VOLCÁN (volcán en actividad — nivel final)
+    // ══════════════════════════════════════════════════════════
+
+    _buildVolcano(W, H, VW, VH) {
+        const scene = this.scene;
+
+        // ── Cielo de lava (maroon oscuro arriba → naranja abajo) ─
+        this._gradientSky('bg_sky_volcano', VW, VH, [
+            [0,    0x1a0d0a],
+            [0.35, 0x3a1410],
+            [0.6,  0x6e2410],
+            [0.82, 0xa83c14],
+            [1.0,  0xd85a1e],
+        ]);
+
+        // ── Volcanes LEJANOS en erupción (cráter + coladas) — scroll 0.14 ─
+        if (!scene.textures.exists('volcano_far')) {
+            const g = scene.make.graphics({ add: false });
+            g.fillStyle(0x2a1610, 1);
+            g.fillTriangle(260, 280, 540, 280, 400, 56);    // cono principal
+            g.fillTriangle(0, 280, 190, 280, 95, 150);
+            g.fillTriangle(560, 280, 780, 280, 680, 120);
+            g.fillTriangle(700, 280, 800, 280, 800, 172);
+            // Cráter incandescente
+            g.fillStyle(0xff5a1e); g.fillTriangle(400, 56, 382, 92, 418, 92);
+            g.fillStyle(0xffb020); g.fillTriangle(400, 64, 392, 86, 408, 86);
+            // Coladas de lava bajando el cono
+            g.fillStyle(0xff5a1e); g.fillRect(398, 90, 3, 80); g.fillRect(401, 152, 3, 88);
+            g.fillStyle(0xd83010); g.fillRect(388, 100, 2, 90); g.fillRect(412, 112, 2, 100);
+            g.generateTexture('volcano_far', 800, 280);
+            g.destroy();
+        }
+        for (let i = 0; i < Math.ceil(W / 800) + 1; i++) {
+            scene.add.image(i * 800, H, 'volcano_far')
+                .setOrigin(0, 1).setScrollFactor(0.14).setDepth(1).setAlpha(0.9);
+        }
+
+        // ── Picos volcánicos MEDIOS + ruinas quemadas — scroll 0.3 ─
+        if (!scene.textures.exists('volcano_mid')) {
+            const g = scene.make.graphics({ add: false });
+            const rnd = new Phaser.Math.RandomDataGenerator(['volcano-mid']);
+            g.fillStyle(0x1a0d0a, 1);
+            let x = -20;
+            while (x < 820) {
+                const pw = rnd.between(80, 160), ph = rnd.between(90, 200);
+                g.fillTriangle(x, 240, x + pw, 240, x + pw / 2, 240 - ph);
+                x += pw * 0.7;
+            }
+            g.fillRect(200, 100, 30, 140); g.fillRect(560, 130, 26, 110);   // torres calcinadas
+            g.fillStyle(0xff5a1e, 0.5);                                      // grietas ardientes
+            for (const cx of [120, 340, 500, 700]) g.fillRect(cx, 190, 2, 46);
+            g.generateTexture('volcano_mid', 800, 240);
+            g.destroy();
+        }
+        for (let i = 0; i < Math.ceil(W / 800) + 1; i++) {
+            scene.add.image(i * 800, H, 'volcano_mid')
+                .setOrigin(0, 1).setScrollFactor(0.3).setDepth(1).setAlpha(0.92);
+        }
+
+        // ── Resplandor rojizo desde abajo (luz de lava, ADD) ──
+        if (!scene.textures.exists('volcano_horizon')) {
+            const g = scene.make.graphics({ add: false });
+            for (let y = VH; y > VH * 0.45; y -= 4) {
+                const t = (y - VH * 0.45) / (VH * 0.55);   // 0 arriba → 1 abajo
+                g.fillStyle(0xff5a1e, 0.02 + 0.06 * t);
+                g.fillRect(0, y, VW, 4);
+            }
+            g.generateTexture('volcano_horizon', VW, VH);
+            g.destroy();
+        }
+        const horizon = scene.add.image(VW / 2, VH / 2, 'volcano_horizon')
+            .setScrollFactor(0).setDepth(1).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.7);
+        scene.tweens.add({ targets: horizon, alpha: 1.0, duration: 3800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+
+        // ── Ríos de lava en el fondo de los POZOS (mundo, se ven en los huecos) ─
+        // scrollFactor 1 y depth 2: bajo el suelo (depth 5) queda oculto, pero en
+        // los huecos entre tramos se ve el río de lava del fondo.
+        if (!scene.textures.exists('volcano_chasm_lava')) {
+            const g = scene.make.graphics({ add: false });
+            const rnd = new Phaser.Math.RandomDataGenerator(['volcano-chasm']);
+            g.fillStyle(0x1a0d0a); g.fillRect(0, 0, 64, 72);           // pared oscura del pozo (arriba)
+            g.fillStyle(0xd83010); g.fillRect(0, 10, 64, 62);          // lava
+            g.fillStyle(0x8a1f0a); g.fillRect(0, 46, 64, 26);
+            g.fillStyle(0xff5a1e); for (let i = 0; i < 10; i++) g.fillEllipse(rnd.between(0, 64), rnd.between(14, 44), rnd.between(10, 22), rnd.between(4, 8)); // coladas
+            g.fillStyle(0xffb020); for (let i = 0; i < 8; i++) g.fillCircle(rnd.between(2, 62), rnd.between(14, 40), rnd.between(2, 4)); // puntos calientes
+            g.fillStyle(0x2e2622); for (let i = 0; i < 6; i++) g.fillEllipse(rnd.between(0, 64), rnd.between(16, 60), rnd.between(6, 14), rnd.between(3, 6)); // costra
+            g.fillStyle(0xffcf5a, 0.7); g.fillRect(0, 10, 64, 2);      // brillo superior
+            g.generateTexture('volcano_chasm_lava', 64, 72);
+            g.destroy();
+        }
+        scene.add.tileSprite(0, 744, W, 72, 'volcano_chasm_lava')
+            .setOrigin(0, 0).setScrollFactor(1).setDepth(2);
+
+        // ── Columnas de humo negro (ambiente) ─────────────────
+        this._pixel('vsmoke_px', 0xffffff, 10);
+        const smoke = scene.add.particles(0, VH, 'vsmoke_px', {
+            x: { min: 0, max: VW },
+            speedY: { min: -25, max: -10 },
+            speedX: { min: -8, max: 14 },
+            scale:  { min: 3, max: 8 },
+            lifespan: 9000,
+            frequency: 380,
+            alpha: { min: 0.05, max: 0.16 },
+            tint: [0x2a2724, 0x3a3632, 0x1a1512],
+        });
+        smoke.setScrollFactor(0).setDepth(2);
+
+        // ── Ceniza cayendo (ambiente) ─────────────────────────
+        this._pixel('ash_px', 0xffffff, 4);
+        const ash = scene.add.particles(0, -10, 'ash_px', {
+            x: { min: 0, max: VW },
+            speedY: { min: 20, max: 50 },
+            speedX: { min: -15, max: 15 },
+            scale:  { min: 0.3, max: 1.0 },
+            lifespan: 9000,
+            frequency: 150,
+            alpha: { min: 0.15, max: 0.5 },
+            tint: [0x3a3632, 0x555049, 0x2a2724],
+        });
+        ash.setScrollFactor(0).setDepth(3);
+
+        // ── Brasas ascendentes incandescentes (ambiente, ADD) ─
+        this._pixel('ember_px', 0xffffff, 4);
+        const embers = scene.add.particles(0, VH + 10, 'ember_px', {
+            x: { min: 0, max: VW },
+            speedY: { min: -55, max: -18 },
+            speedX: { min: -12, max: 12 },
+            scale:  { min: 0.3, max: 1.0 },
+            lifespan: 5000,
+            frequency: 110,
+            alpha: { min: 0.3, max: 0.8 },
+            tint: [0xff6a20, 0xffb020, 0xff5a1e],
+            blendMode: 'ADD',
+        });
+        embers.setScrollFactor(0).setDepth(3);
     }
 }

@@ -11,6 +11,7 @@ import Level1Data from '../levels/Level1.js';
 import Level2Data from '../levels/Level2.js';
 import Level3Data from '../levels/Level3.js';
 import Level4Data from '../levels/Level4.js';
+import Level5Data from '../levels/Level5.js';
 
 // ── Definición de niveles ────────────────────────────────────
 //  id        : clave única para localStorage
@@ -25,7 +26,7 @@ const LEVEL_DEFS = [
   { id: 'level_2', name: '1-2', label: 'Cuevas\nOscuras',  x: 265, y: 205, levelData: Level2Data, isBoss: false },
   { id: 'level_3', name: '1-3', label: 'Puentes\nRotos',   x: 415, y: 305, levelData: Level3Data, isBoss: false },
   { id: 'level_4', name: '1-4', label: 'Cumbre\nHelada',   x: 570, y: 190, levelData: Level4Data, isBoss: false },
-  { id: 'level_5', name: '1-5', label: '¡JEFE!',           x: 700, y: 310, levelData: null,       isBoss: true  },
+  { id: 'level_5', name: '1-5', label: 'Corazón del\nVolcán', x: 700, y: 310, levelData: Level5Data, isBoss: true  },
 ];
 
 const STORAGE_KEY = 'jumpquest_progress';

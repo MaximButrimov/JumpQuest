@@ -21,6 +21,7 @@ import VegetationTextures  from './VegetationTextures.js';
 import CaveTextures        from './CaveTextures.js';
 import SnowTextures        from './SnowTextures.js';
 import RuinsTextures       from './RuinsTextures.js';
+import VolcanoTextures     from './VolcanoTextures.js';
 
 /** Todos los módulos de textura, en orden de construcción. */
 export const TEXTURE_MODULES = [
@@ -32,6 +33,7 @@ export const TEXTURE_MODULES = [
     CaveTextures,
     SnowTextures,
     RuinsTextures,
+    VolcanoTextures,
 ];
 
 /** Construye todas las texturas del juego (idempotente). */
@@ -48,4 +50,5 @@ export {
     CaveTextures,
     SnowTextures,
     RuinsTextures,
+    VolcanoTextures,
 };

@@ -127,5 +127,33 @@ export default class TerrainTextures {
             g.fillStyle(0xffffff, 0.4);  g.fillRect(18, 2, 7, 1);
             g.fillStyle(0x8ac6de); g.fillRect(11, 5, 1, 7); g.fillRect(23, 4, 1, 8); g.fillRect(6, 9, 4, 1);
         });
+
+        // ── Tile de roca volcánica (32×16) — grietas ardientes ──
+        defineTexture(scene, 'platform_volcanic', 32, 16, (g) => {
+            g.fillStyle(0x2e2622); g.fillRect(0, 0, 32, 16);             // cuerpo de basalto
+            g.fillStyle(0x1a1512); g.fillRect(0, 11, 32, 5);           // más oscuro abajo
+            g.fillStyle(0x3a2f28); g.fillRect(4, 2, 12, 4); g.fillRect(20, 3, 9, 3); // manchas claras
+            g.fillStyle(0x453931); g.fillRect(0, 0, 32, 2);            // borde iluminado
+            g.fillStyle(0xff5a1e); g.fillRect(8, 4, 1, 8); g.fillRect(9, 9, 6, 1); g.fillRect(22, 3, 1, 9); // grietas de lava
+            g.fillStyle(0xffb020); g.fillRect(8, 6, 1, 3); g.fillRect(22, 6, 1, 3);  // núcleo caliente
+            g.fillStyle(0x140f0c); g.fillRect(0, 14, 32, 2);          // sombra inferior
+        });
+
+        // Suelo VOLCÁNICO (basalto arriba + roca maciza con vetas de lava)
+        defineTexture(scene, 'ground_volcanic', 32, 80, (g) => {
+            g.fillStyle(0x241d18); g.fillRect(0, 0, 32, 80);              // cuerpo de basalto
+            g.fillStyle(0x1a1512); g.fillRect(0, 44, 32, 36);           // más oscuro abajo
+            g.fillStyle(0x2e2622); g.fillRect(4, 22, 11, 9); g.fillRect(19, 34, 9, 8); g.fillRect(7, 56, 9, 7);
+            g.fillStyle(0x14100c); g.fillRect(12, 30, 1, 14); g.fillRect(24, 48, 1, 16); // fisuras
+            g.fillStyle(0x8a1f0a); g.fillRect(6, 40, 2, 20); g.fillRect(20, 54, 2, 22);  // vetas de lava profundas
+            g.fillStyle(0xff5a1e); g.fillRect(6, 44, 1, 12); g.fillRect(20, 58, 1, 14);
+            // Superficie de basalto con grietas ardientes
+            g.fillStyle(0x2e2622); g.fillRect(0, 0, 32, 16);
+            g.fillStyle(0x3a2f28); g.fillRect(4, 2, 12, 4); g.fillRect(20, 3, 9, 3);
+            g.fillStyle(0x453931); g.fillRect(0, 0, 32, 2);            // borde superior
+            g.fillStyle(0xff5a1e); g.fillRect(8, 4, 1, 9); g.fillRect(9, 10, 6, 1); g.fillRect(23, 3, 1, 10); // grietas
+            g.fillStyle(0xffb020); g.fillRect(8, 6, 1, 3); g.fillRect(23, 7, 1, 3);
+            g.fillStyle(0x140f0c); g.fillRect(0, 15, 32, 1);
+        });
     }
 }
