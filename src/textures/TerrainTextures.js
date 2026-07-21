@@ -59,6 +59,64 @@ export default class TerrainTextures {
             g.fillStyle(0x1a1a2e); g.fillTriangle(3, 6, 7, 4, 7, 8);  // flecha
         });
 
+        // ══════════════════════════════════════════════════════
+        //  PLATAFORMAS MÓVILES POR TEMA (32×12)
+        //  Material propio de cada bioma + un "núcleo de energía" y chevrons
+        //  laterales: lenguaje visual común para que se reconozcan como móviles.
+        //  Las resuelve PlatformManager.MOVING_TEX según el tema del nivel.
+        // ══════════════════════════════════════════════════════
+
+        // Bosque — plancha de madera con musgo (núcleo dorado)
+        defineTexture(scene, 'moving_forest', 32, 12, (g) => {
+            g.fillStyle(0x8a643c); g.fillRect(0, 0, 32, 12);
+            g.fillStyle(0xa87a4a); g.fillRect(0, 0, 32, 2);
+            g.fillStyle(0x5a3d22); g.fillRect(0, 10, 32, 2);
+            g.fillStyle(0x3fa24f); g.fillRect(0, 0, 32, 1);
+            g.fillStyle(0x6b4a2a); g.fillRect(10, 2, 1, 8); g.fillRect(21, 2, 1, 8);
+            g.fillStyle(0xf7c948); g.fillCircle(16, 7, 3); g.fillStyle(0xfff0a0); g.fillCircle(16, 7, 1);
+            g.fillStyle(0xf7c948); g.fillTriangle(6, 4, 6, 9, 3, 6); g.fillTriangle(26, 4, 26, 9, 29, 6);
+        });
+
+        // Cueva — roca oscura con cristal (núcleo cian)
+        defineTexture(scene, 'moving_cave', 32, 12, (g) => {
+            g.fillStyle(0x3a3550); g.fillRect(0, 0, 32, 12);
+            g.fillStyle(0x4d4668); g.fillRect(0, 0, 32, 2);
+            g.fillStyle(0x241f36); g.fillRect(0, 10, 32, 2);
+            g.fillStyle(0x2a2540); g.fillRect(10, 2, 1, 8); g.fillRect(21, 2, 1, 8);
+            g.fillStyle(0x39d0ff); g.fillCircle(16, 7, 3); g.fillStyle(0xbff4ff); g.fillCircle(16, 7, 1);
+            g.fillStyle(0x39d0ff); g.fillTriangle(6, 4, 6, 9, 3, 6); g.fillTriangle(26, 4, 26, 9, 29, 6);
+        });
+
+        // Ruinas — arenisca con metal (núcleo ámbar)
+        defineTexture(scene, 'moving_ruins', 32, 12, (g) => {
+            g.fillStyle(0x9a8258); g.fillRect(0, 0, 32, 12);
+            g.fillStyle(0xb89a6a); g.fillRect(0, 0, 32, 2);
+            g.fillStyle(0x6f5836); g.fillRect(0, 10, 32, 2);
+            g.fillStyle(0x8c744c); g.fillRect(10, 2, 1, 8); g.fillRect(21, 2, 1, 8);
+            g.fillStyle(0xe8a838); g.fillCircle(16, 7, 3); g.fillStyle(0xffd98a); g.fillCircle(16, 7, 1);
+            g.fillStyle(0xe8a838); g.fillTriangle(6, 4, 6, 9, 3, 6); g.fillTriangle(26, 4, 26, 9, 29, 6);
+        });
+
+        // Nieve — hielo (núcleo blanco-azul)
+        defineTexture(scene, 'moving_snow', 32, 12, (g) => {
+            g.fillStyle(0x9ad8ee); g.fillRect(0, 0, 32, 12);
+            g.fillStyle(0xd6f2ff); g.fillRect(0, 0, 32, 3);
+            g.fillStyle(0x6fb2d0); g.fillRect(0, 10, 32, 2);
+            g.fillStyle(0x8ac6de); g.fillRect(10, 3, 1, 7); g.fillRect(21, 3, 1, 7);
+            g.fillStyle(0x5aa0e0); g.fillCircle(16, 7, 3); g.fillStyle(0xffffff); g.fillCircle(16, 7, 1);
+            g.fillStyle(0xffffff, 0.9); g.fillTriangle(6, 4, 6, 9, 3, 6); g.fillTriangle(26, 4, 26, 9, 29, 6);
+        });
+
+        // Volcán — obsidiana con veta de lava (núcleo naranja)
+        defineTexture(scene, 'moving_volcano', 32, 12, (g) => {
+            g.fillStyle(0x241d18); g.fillRect(0, 0, 32, 12);
+            g.fillStyle(0x3a2f28); g.fillRect(0, 0, 32, 2);
+            g.fillStyle(0x0d0908); g.fillRect(0, 10, 32, 2);
+            g.fillStyle(0xff5a1e, 0.5); g.fillRect(0, 6, 32, 1);
+            g.fillStyle(0xff5a1e); g.fillCircle(16, 7, 3); g.fillStyle(0xffb020); g.fillCircle(16, 7, 1);
+            g.fillStyle(0xff5a1e); g.fillTriangle(6, 4, 6, 9, 3, 6); g.fillTriangle(26, 4, 26, 9, 29, 6);
+        });
+
         // ── Tile de hielo (32×16) — superficie deslizante ──
         defineTexture(scene, 'platform_ice', 32, 16, (g) => {
             g.fillStyle(0x9ad8ee); g.fillRect(0, 0, 32, 16);          // cuerpo de hielo

@@ -14,15 +14,15 @@ export default {
     decorations: [
         // ══ FONDO (depth 3) — rocas y columnas antiguas, apoyadas en el suelo ══
         // Receden por OSCURIDAD (tinte), no por transparencia (opacas = sólidas).
-        { texture: 'cave_boulder', x: 240,  depth: 3, scale: 1.8, tint: 0x4d4a66 },
-        { texture: 'cave_pillar',  x: 560,  depth: 3, scale: 1.3, tint: 0x4d4a66 },
-        { texture: 'cave_boulder', x: 1180, depth: 3, scale: 1.9, tint: 0x4d4a66, flipX: true },
-        { texture: 'cave_boulder', x: 1950, depth: 3, scale: 1.6, tint: 0x4d4a66 },
-        { texture: 'cave_pillar',  x: 2600, depth: 3, scale: 1.5, tint: 0x4d4a66, flipX: true },
-        { texture: 'cave_boulder', x: 3350, depth: 3, scale: 1.8, tint: 0x4d4a66 },
-        { texture: 'cave_boulder', x: 4150, depth: 3, scale: 1.9, tint: 0x4d4a66, flipX: true },
-        { texture: 'cave_pillar',  x: 4950, depth: 3, scale: 1.4, tint: 0x4d4a66 },
-        { texture: 'cave_boulder', x: 5400, depth: 3, scale: 1.8, tint: 0x4d4a66 },
+        { texture: 'cave_boulder', x: 240,  depth: 3, scale: 1.2,  tint: 0x4d4a66 },
+        { texture: 'cave_pillar',  x: 560,  depth: 3, scale: 1.3,  tint: 0x4d4a66 },
+        { texture: 'cave_boulder', x: 1180, depth: 3, scale: 1.25, tint: 0x4d4a66, flipX: true },
+        { texture: 'cave_boulder', x: 1950, depth: 3, scale: 1.15, tint: 0x4d4a66 },
+        { texture: 'cave_pillar',  x: 2600, depth: 3, scale: 1.5,  tint: 0x4d4a66, flipX: true },
+        { texture: 'cave_boulder', x: 3350, depth: 3, scale: 1.2,  tint: 0x4d4a66 },
+        { texture: 'cave_boulder', x: 4150, depth: 3, scale: 1.25, tint: 0x4d4a66, flipX: true },
+        { texture: 'cave_pillar',  x: 4950, depth: 3, scale: 1.4,  tint: 0x4d4a66 },
+        { texture: 'cave_boulder', x: 5400, depth: 3, scale: 1.2,  tint: 0x4d4a66 },
 
         // ══ TECHO (depth 4) — estalactitas + lianas/raíces colgantes ══
         { texture: 'stalactite', x: 160,  y: 0, originY: 0, scale: 1.1 },
@@ -144,22 +144,14 @@ export default {
         { x: 5420, y: 260, width: 192,  texture: 'stone' },
     ],
 
+    // ── Plataformas móviles ───────────────────────────────────
+    // Sección 3 (x: 1800–2500) es el NÚCLEO de móviles (sin estáticas): aquí
+    // aportan. Las móviles sueltas de otras secciones se quitaron por redundantes.
     movingPlatforms: [
-        // Sección 3 — núcleo de la cueva (x: 1800–2500)
         { x: 1830, y: 540, width: 96,  config: { axis: 'x', range: 110, speed: 60 } },
         { x: 2010, y: 440, width: 96,  config: { axis: 'y', range:  90, speed: 50 } },
         { x: 2200, y: 560, width: 64,  config: { axis: 'x', range:  95, speed: 75 } },
         { x: 2370, y: 440, width: 96,  config: { axis: 'y', range: 100, speed: 55 } },
-
-        // Sección 5 — apoyo entre los puentes rotos
-        { x: 3690, y: 700, width: 64,  config: { axis: 'x', range:  70, speed: 70 } },
-
-        // Sección 6 — ascensor de cueva
-        { x: 4430, y: 520, width: 96,  config: { axis: 'y', range: 130, speed: 55 } },
-
-        // Sección 7 — plataformas rápidas finales
-        { x: 5060, y: 320, width: 64,  config: { axis: 'x', range: 105, speed: 90 } },
-        { x: 5230, y: 260, width: 64,  config: { axis: 'y', range:  95, speed: 80 } },
     ],
 
     coins: [

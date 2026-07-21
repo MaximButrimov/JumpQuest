@@ -123,20 +123,20 @@ export default {
         [3580, 392], // cima de la sección 4
     ],
 
-    // ── Enemigos (marcadores; los esqueletos en llamas van después) ──
+    // ── Enemigos ─────────────────────────────────────────────
     enemies: [
-        // Slimes en suelo y plataformas
-        { x: 350,  y: 730, speed: 65 },
-        { x: 700,  y: 730, speed: 75 },
-        { x: 1350, y: 558, speed: 70 },
-        { x: 1500, y: 730, speed: 80 },
-        { x: 2380, y: 538, speed: 75 },
-        { x: 2500, y: 730, speed: 85 },
-        { x: 3400, y: 498, speed: 80 },
-        { x: 3400, y: 730, speed: 90 },
-        { x: 4380, y: 518, speed: 85 },
-        { x: 4500, y: 730, speed: 90 },
-        { x: 5200, y: 730, speed: 95 },
+        // Esqueletos en llamas (exclusivos del volcán) en suelo y plataformas
+        { x: 350,  y: 730, speed: 65, type: 'skeleton' },
+        { x: 700,  y: 730, speed: 75, type: 'skeleton' },
+        { x: 1350, y: 552, speed: 70, type: 'skeleton' },
+        { x: 1500, y: 730, speed: 80, type: 'skeleton' },
+        { x: 2380, y: 532, speed: 75, type: 'skeleton' },
+        { x: 2500, y: 730, speed: 85, type: 'skeleton' },
+        { x: 3400, y: 492, speed: 80, type: 'skeleton' },
+        { x: 3400, y: 730, speed: 90, type: 'skeleton' },
+        { x: 4380, y: 512, speed: 85, type: 'skeleton' },
+        { x: 4500, y: 730, speed: 90, type: 'skeleton' },
+        { x: 5200, y: 730, speed: 95, type: 'skeleton' },
 
         // Murciélagos (presión aérea sobre los pozos de lava)
         { x: 990,  y: 560, speed: 75, type: 'bat', floatAmplitude: 40 },
@@ -144,6 +144,16 @@ export default {
         { x: 3010, y: 540, speed: 88, type: 'bat', floatAmplitude: 46 },
         { x: 3990, y: 520, speed: 92, type: 'bat', floatAmplitude: 48 },
         { x: 4990, y: 520, speed: 96, type: 'bat', floatAmplitude: 46 },
+    ],
+
+    // ── LAVA LETAL — el contacto pierde las 3 vidas (Game Over inmediato) ──
+    // Una zona en el fondo de cada pozo: caer dentro = muerte instantánea.
+    lava: [
+        { x: 900,  y: 764, width: 180, height: 48 }, // pozo 1
+        { x: 1900, y: 764, width: 200, height: 48 }, // pozo 2
+        { x: 2900, y: 764, width: 220, height: 48 }, // pozo 3
+        { x: 3900, y: 764, width: 200, height: 48 }, // pozo 4
+        { x: 4900, y: 764, width: 180, height: 48 }, // pozo 5
     ],
 
     // ── Decoraciones (volcán, por capas de profundidad) ──────
@@ -155,16 +165,16 @@ export default {
     decorations: [
         // ══ FONDO (depth 3) — ruinas calcinadas y rocas, atenuadas ══
         { texture: 'ruin_burnt',  x: 140,  depth: 3, scale: 1.2,  tint: 0x8f6650 },
-        { texture: 'volcano_rock', x: 560, depth: 3, scale: 1.8,  tint: 0x8f6650 },
+        { texture: 'volcano_rock', x: 560, depth: 3, scale: 1.25, tint: 0x8f6650 },
         { texture: 'ruin_burnt',  x: 1300, depth: 3, scale: 1.15, tint: 0x8f6650, flipX: true },
-        { texture: 'volcano_rock', x: 1750, depth: 3, scale: 1.6, tint: 0x8f6650 },
+        { texture: 'volcano_rock', x: 1750, depth: 3, scale: 1.15, tint: 0x8f6650 },
         { texture: 'ruin_burnt',  x: 2400, depth: 3, scale: 1.25, tint: 0x8f6650 },
-        { texture: 'volcano_rock', x: 2750, depth: 3, scale: 1.7, tint: 0x8f6650, flipX: true },
-        { texture: 'volcano_rock', x: 3300, depth: 3, scale: 1.6, tint: 0x8f6650 },
+        { texture: 'volcano_rock', x: 2750, depth: 3, scale: 1.2, tint: 0x8f6650, flipX: true },
+        { texture: 'volcano_rock', x: 3300, depth: 3, scale: 1.15, tint: 0x8f6650 },
         { texture: 'ruin_burnt',  x: 3560, depth: 3, scale: 1.2,  tint: 0x8f6650, flipX: true },
         { texture: 'ruin_burnt',  x: 4300, depth: 3, scale: 1.2,  tint: 0x8f6650 },
-        { texture: 'volcano_rock', x: 4650, depth: 3, scale: 1.7, tint: 0x8f6650, flipX: true },
-        { texture: 'volcano_rock', x: 5200, depth: 3, scale: 1.6, tint: 0x8f6650 },
+        { texture: 'volcano_rock', x: 4650, depth: 3, scale: 1.2, tint: 0x8f6650, flipX: true },
+        { texture: 'volcano_rock', x: 5200, depth: 3, scale: 1.15, tint: 0x8f6650 },
 
         // ══ SUELO (depth 6) — roca, lava, obsidiana, fumarolas, secos ══
         // Tramo 1
@@ -185,7 +195,7 @@ export default {
         { texture: 'smoke_vent',    x: 2850, depth: 6 },
         // Tramo 4
         { texture: 'burnt_tree',    x: 3160, depth: 6 },
-        { texture: 'volcano_rock',  x: 3300, depth: 6, flipX: true },
+        { texture: 'volcano_rock',  x: 3680, depth: 6, flipX: true },  // reubicada (evita duplicar con la de fondo en 3300)
         { texture: 'smoke_vent',    x: 3480, depth: 6 },
         { texture: 'lava_pool',     x: 3820, depth: 6 },
         // Tramo 5

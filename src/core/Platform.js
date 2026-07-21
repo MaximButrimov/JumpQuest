@@ -24,6 +24,10 @@ class PlatformManager {
   // (y su textura ground_X en TerrainTextures). Totalmente escalable.
   static GROUND_TEX = { grass: 'ground_grass', stone: 'ground_stone', ice: 'ground_ice', volcanic: 'ground_volcanic' };
 
+  // Mapeo TEMA del nivel → textura de plataforma MÓVIL (acorde a cada bioma).
+  // Lo usa createMoving(). Fallback a la dorada genérica 'platform_moving'.
+  static MOVING_TEX = { forest: 'moving_forest', cave: 'moving_cave', ruins: 'moving_ruins', snow: 'moving_snow', volcano: 'moving_volcano' };
+
   /** @param {Phaser.Scene} scene */
   constructor(scene) {
     this.scene = scene;
@@ -97,10 +101,12 @@ class PlatformManager {
    * @param {number}  opts.range  – Distancia de desplazamiento (px)
    * @param {number}  opts.speed  – px/s
    * @param {string}  opts.axis   – 'x' | 'y'
+   * @param {string}  [theme]     – Tema del nivel (elige la textura, ver MOVING_TEX)
    */
-  createMoving(x, y, width, { range = 100, speed = 60, axis = 'x' } = {}) {
+  createMoving(x, y, width, { range = 100, speed = 60, axis = 'x' } = {}, theme = null) {
     const tileW = 32;
     const count = Math.max(1, Math.floor(width / tileW));
+    const texKey = PlatformManager.MOVING_TEX[theme] || 'platform_moving';
 
     // Contenedor vacío para mover todos los tiles juntos
     const sprites = [];
@@ -109,7 +115,7 @@ class PlatformManager {
       const tile = this.movingGroup.create(
         x + i * tileW + tileW / 2,
         y,
-        'platform_moving'
+        texKey
       );
       tile.setImmovable(true);
       tile.setDepth(5);

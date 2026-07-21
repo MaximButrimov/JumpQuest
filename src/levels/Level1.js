@@ -137,21 +137,14 @@ export default {
         { x: 5400, y: 300, width: 192,  texture: 'grass' },
     ],
 
+    // ── Plataformas móviles ───────────────────────────────────
+    // Sección 3 (x: 1800–2400) es una TRAVESÍA dedicada de móviles (sin
+    // estáticas): aquí sí aportan. Las móviles sueltas de otras secciones se
+    // quitaron por redundantes (las estáticas contiguas ya dan el paso).
     movingPlatforms: [
-        // Sección 3 original (x: 1800–2400)
         { x: 1800, y: 500, width: 128, config: { axis: 'x', range: 120, speed: 55 } },
         { x: 2050, y: 420, width: 96,  config: { axis: 'y', range: 80,  speed: 45 } },
         { x: 2200, y: 540, width: 96,  config: { axis: 'x', range: 100, speed: 70 } },
-
-        // Sección 5 — puente roto: una plataforma móvil de apoyo
-        { x: 3720, y: 680, width: 96,  config: { axis: 'x', range: 80,  speed: 65 } },
-
-        // Sección 6 — torre: ascensor vertical en el centro
-        { x: 4460, y: 440, width: 96,  config: { axis: 'y', range: 140, speed: 50 } },
-
-        // Sección 7 — tramo final: plataformas rápidas
-        { x: 5060, y: 380, width: 96,  config: { axis: 'x', range: 110, speed: 85 } },
-        { x: 5250, y: 300, width: 96,  config: { axis: 'y', range: 100, speed: 75 } },
     ],
 
     coins: [

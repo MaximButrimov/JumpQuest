@@ -117,16 +117,16 @@ export default {
     //  (0-1500, 1650-2600, 2750-3900, 4050-5600), nunca sobre los agujeros.
     decorations: [
         // ══ FONDO (depth 3) — rocas nevadas, glaciar y pinos, atenuados ══
-        { texture: 'snow_rock',   x: 250,  depth: 3, scale: 1.6,  tint: 0xd2e2f0 },
-        { texture: 'ice_boulder', x: 850,  depth: 3, scale: 1.5,  tint: 0xd2e2f0 },
+        { texture: 'snow_rock',   x: 250,  depth: 3, scale: 1.2,  tint: 0xd2e2f0 },
+        { texture: 'ice_boulder', x: 850,  depth: 3, scale: 1.15, tint: 0xd2e2f0 },
         { texture: 'snow_pine',   x: 1150, depth: 3, scale: 1.3,  tint: 0xd2e2f0 },
-        { texture: 'snow_rock',   x: 1850, depth: 3, scale: 1.5,  tint: 0xd2e2f0, flipX: true },
-        { texture: 'ice_boulder', x: 2350, depth: 3, scale: 1.6,  tint: 0xd2e2f0 },
+        { texture: 'snow_rock',   x: 1850, depth: 3, scale: 1.2,  tint: 0xd2e2f0, flipX: true },
+        { texture: 'ice_boulder', x: 2350, depth: 3, scale: 1.2,  tint: 0xd2e2f0 },
         { texture: 'snow_pine',   x: 2900, depth: 3, scale: 1.4,  tint: 0xd2e2f0 },
-        { texture: 'snow_rock',   x: 3400, depth: 3, scale: 1.6,  tint: 0xd2e2f0, flipX: true },
-        { texture: 'ice_boulder', x: 4300, depth: 3, scale: 1.5,  tint: 0xd2e2f0 },
+        { texture: 'snow_rock',   x: 3400, depth: 3, scale: 1.2,  tint: 0xd2e2f0, flipX: true },
+        { texture: 'ice_boulder', x: 4300, depth: 3, scale: 1.15, tint: 0xd2e2f0 },
         { texture: 'snow_pine',   x: 4900, depth: 3, scale: 1.35, tint: 0xd2e2f0 },
-        { texture: 'snow_rock',   x: 5250, depth: 3, scale: 1.5,  tint: 0xd2e2f0, flipX: true },
+        { texture: 'snow_rock',   x: 5250, depth: 3, scale: 1.2,  tint: 0xd2e2f0, flipX: true },
 
         // ══ SUELO (depth 6) — hielo, lagos, carámbanos, dunas, figuras ══
         // Tramo 1 (0-1500)

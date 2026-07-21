@@ -1042,6 +1042,16 @@ class GameScene extends Phaser.Scene {
       }
     );
 
+    // ── Colisión: jugador ↔ LAVA (muerte instantánea) ────
+    // Contacto con la lava = pierde las 3 vidas → Game Over inmediato.
+    if (this.level.lava) {
+      this.physics.add.overlap(
+        this.player.gameObject,
+        this.level.lava,
+        () => this.player.instantDeath()
+      );
+    }
+
     // ── Eventos de estado ─────────────────────────────────
     this.events.on('playerDied', () => {
       this.cameras.main.fade(600, 80, 0, 0);
@@ -1118,7 +1128,10 @@ class GameScene extends Phaser.Scene {
       scaleY:   0,
       alpha:    0,
       duration: 200,
-      onComplete: () => enemy.destroy()
+      onComplete: () => {
+        if (enemy.fireEmitter) enemy.fireEmitter.destroy();  // aura de fuego (esqueletos)
+        enemy.destroy();
+      }
     });
 
     if (this.sound.get('sfx_hit')) {

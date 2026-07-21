@@ -1,11 +1,32 @@
 // ══════════════════════════════════════════════════════════════
-//  Módulo de texturas: ENEMIGOS (slime, murciélago)
+//  Módulo de texturas: ENEMIGOS (slime, murciélago, esqueleto en llamas)
 // ══════════════════════════════════════════════════════════════
 
 import { defineTexture } from './textureUtil.js';
 
 export default class EnemyTextures {
     static build(scene) {
+        // Esqueleto en llamas (exclusivo del volcán) (26×34)
+        defineTexture(scene, 'enemy_skeleton', 26, 34, (g) => {
+            // Llama sobre el cráneo
+            g.fillStyle(0xffb020); g.fillTriangle(13, 0, 9, 8, 17, 8);
+            g.fillStyle(0xffcf5a); g.fillTriangle(13, 3, 11, 8, 15, 8);
+            // Cráneo
+            g.fillStyle(0xe8e4d8); g.fillEllipse(13, 11, 15, 13);
+            g.fillStyle(0xcfcabb); g.fillRect(9, 15, 8, 3);            // mandíbula
+            g.fillStyle(0x140f0c); g.fillCircle(9, 11, 2); g.fillCircle(17, 11, 2);   // cuencas
+            g.fillStyle(0xff6a20); g.fillCircle(9, 11, 1); g.fillCircle(17, 11, 1);   // ojos ardientes
+            g.fillStyle(0x140f0c); g.fillRect(10, 16, 1, 2); g.fillRect(13, 16, 1, 2); g.fillRect(16, 16, 1, 2); // dientes
+            // Caja torácica
+            g.fillStyle(0xe8e4d8); g.fillRect(8, 19, 10, 9);
+            g.fillStyle(0x140f0c); g.fillRect(8, 21, 10, 1); g.fillRect(8, 24, 10, 1); // costillas
+            g.fillStyle(0xcfcabb); g.fillRect(12, 19, 2, 9);          // columna
+            // Piernas
+            g.fillStyle(0xe8e4d8); g.fillRect(9, 28, 3, 6); g.fillRect(14, 28, 3, 6);
+            g.fillStyle(0xcfcabb); g.fillRect(9, 28, 1, 6); g.fillRect(14, 28, 1, 6);
+        });
+
+
         // Slime
         defineTexture(scene, 'enemy_slime', 32, 28, (g) => {
             g.fillStyle(0xe84393); g.fillEllipse(16, 18, 32, 24);     // cuerpo

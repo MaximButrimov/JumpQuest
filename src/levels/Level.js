@@ -71,6 +71,7 @@ export default class Level {
         this.stars   = null;   // estrellas de poder
         this.enemies = null;
         this.portal  = null;
+        this.lava    = null;   // zonas de lava letal (grupo de overlap)
 
         // Sistemas
         this.backgroundSystem = new BackgroundSystem(scene);
@@ -92,6 +93,7 @@ export default class Level {
         this._buildDecorations();
         this._buildCollectibles();
         this._buildEnemies();
+        this._buildLava();          // zonas de lava letal (data.lava)
         this._buildPortal();
     }
 
@@ -154,8 +156,9 @@ export default class Level {
             pm.createStatic(p.x, p.y, p.width, p.texture);
         });
 
+        const theme = this.data.theme;
         (this.data.movingPlatforms || []).forEach(p => {
-            pm.createMoving(p.x, p.y, p.width, p.config);
+            pm.createMoving(p.x, p.y, p.width, p.config, theme);
         });
     }
 
@@ -306,11 +309,9 @@ export default class Level {
         });
 
         this.data.enemies.forEach(e => {
-            if (e.type === 'bat') {
-                this._createBat(e);
-            } else {
-                this._createSlime(e);
-            }
+            if      (e.type === 'bat')      this._createBat(e);
+            else if (e.type === 'skeleton') this._createSkeleton(e);
+            else                            this._createSlime(e);
         });
 
         this.platformManager.addEnemyColliders(this.enemies);
@@ -375,6 +376,77 @@ export default class Level {
             ease:     'Sine.easeInOut',
             delay:    Phaser.Math.Between(0, 180)
         });
+    }
+
+    // Esqueleto en llamas: camina como el slime (gravedad + rebote en paredes),
+    // con textura de hueso ardiente y un aura de fuego que lo sigue.
+    _createSkeleton(e) {
+        const scene = this.scene;
+        const skel = this.enemies.create(e.x, e.y, 'enemy_skeleton').setDepth(7);
+        skel.setVelocityX(e.speed);
+        skel.setCollideWorldBounds(true);
+        skel.setBounceX(1);
+
+        // Hitbox ajustada al esqueleto (textura 26×34)
+        skel.body.setSize(14, 22);
+        skel.body.setOffset(6, 10);
+        skel.body.setGravityY(700);   // gravedad propia (la global es 0)
+        skel.isBat = false;
+
+        // Aura de fuego que sigue al esqueleto (partículas ADD)
+        if (!scene.textures.exists('skel_fire_px')) {
+            const g = scene.make.graphics({ add: false });
+            g.fillStyle(0xffffff); g.fillCircle(3, 3, 3);
+            g.generateTexture('skel_fire_px', 6, 6);
+            g.destroy();
+        }
+        const fire = scene.add.particles(e.x, e.y, 'skel_fire_px', {
+            speed:    { min: 8, max: 34 },
+            angle:    { min: 240, max: 300 },
+            scale:    { start: 0.9, end: 0 },
+            lifespan: 480,
+            frequency: 55,
+            alpha:    { min: 0.35, max: 0.75 },
+            tint:     [0xff6a20, 0xffb020, 0xff5a1e],
+            blendMode: 'ADD',
+        });
+        fire.setDepth(7).startFollow(skel, 0, -4);
+        skel.fireEmitter = fire;   // GameScene lo destruye al morir el enemigo
+
+        // Parpadeo de llama
+        scene.tweens.add({
+            targets:  skel,
+            scaleY:   1.08, scaleX: 0.94,
+            duration: 300, yoyo: true, repeat: -1,
+            ease:     'Sine.easeInOut', delay: Phaser.Math.Between(0, 300)
+        });
+    }
+
+    // ─────────────────────────────
+    // LAVA LETAL (zonas de muerte instantánea)
+    // ─────────────────────────────
+    // Data-driven y desacoplado: data.lava = [{ x, y, width, height }]. Crea
+    // cuerpos estáticos invisibles; el overlap con el jugador (en GameScene)
+    // dispara player.instantDeath(). El grupo existe siempre (vacío si no hay
+    // lava) para que la escena pueda solaparlo sin comprobaciones.
+    _buildLava() {
+        this.lava = this.scene.physics.add.staticGroup();
+        const zones = this.data.lava || [];
+        if (zones.length === 0) return;
+
+        if (!this.scene.textures.exists('hazard_px')) {
+            const g = this.scene.make.graphics({ add: false });
+            g.fillStyle(0xffffff); g.fillRect(0, 0, 1, 1);
+            g.generateTexture('hazard_px', 1, 1);
+            g.destroy();
+        }
+
+        for (const z of zones) {
+            const body = this.lava.create(z.x, z.y, 'hazard_px')
+                .setOrigin(0, 0).setVisible(false);
+            body.setDisplaySize(z.width, z.height);
+            body.refreshBody();
+        }
     }
 
     // ─────────────────────────────

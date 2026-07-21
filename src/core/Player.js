@@ -485,6 +485,27 @@ class Player {
     this.sprite.body.setVelocity(dir * 200, -300);
   }
 
+  /**
+   * Muerte instantánea: pierde TODAS las vidas de golpe y provoca Game Over
+   * inmediato, ignorando la invencibilidad y los checkpoints. Desacoplado de su
+   * origen: lo puede invocar cualquier peligro (lava, trampa, ataque, etc.).
+   */
+  instantDeath() {
+    if (!this.isAlive) return;
+
+    this.lives = 0;
+    this.scene.events.emit('livesChanged', this.lives);
+
+    this.scene.cameras.main.flash(300, 140, 30, 0);   // fogonazo naranja
+    this.scene.cameras.main.shake(300, 0.02);
+
+    if (this.scene.sound.get('sfx_hit')) {
+      this.scene.sound.play('sfx_hit', { volume: 0.6, detune: -500 });
+    }
+
+    this.die();
+  }
+
   /** Muerte definitiva */
   die() {
     this.isAlive = false;
