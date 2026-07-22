@@ -988,9 +988,11 @@ class BossScene extends Phaser.Scene {
     this.player.setControlInversion(this.controlInversion);
     this.physics.add.collider(this.player.gameObject, this.solids);
 
-    // ── Jefe ──  (el SALTO es solo un disparador; no conoce la inversión)
+    // ── Jefe ──  (el SALTO es solo un disparador; no conoce la inversión.
+    //  `target` es solo un proveedor de posición para sus patrones dirigidos.)
     this.boss = new Boss(this, W - 150, H - 120, {
       hp: 5,
+      target:     this.player.gameObject,
       onJump:     () => this.controlInversion.toggle(),
       onHpChange: (hp, max) => this._updateBossBar(hp, max),
       onDefeated: () => this._onBossDefeated(),

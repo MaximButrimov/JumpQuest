@@ -1,13 +1,20 @@
 // ══════════════════════════════════════════════════════════════
 //  Boss.js — Jefe final (esqueleto con armadura)
 //
-//  Comportamiento: PATRONES ALEATORIOS DE SALTOS. Cada cierto tiempo (aleatorio)
-//  salta en una dirección y con una fuerza aleatorias, rebotando en las paredes.
+//  IA por PATRONES ALEATORIOS. Cuando está apoyado y termina el enfriamiento,
+//  elige al azar uno de estos movimientos:
+//    · SALTO      — salto alto en dirección aleatoria.            (salta → invierte)
+//    · CAÍDA      — salto parabólico APUNTANDO al jugador.        (salta → invierte)
+//    · EMBESTIDA  — carga a ras de suelo hacia el jugador.        (no salta → no invierte)
+//    · RÁFAGA     — 3 saltitos rápidos persiguiendo al jugador.   (cuenta como UN salto)
+//  Los ataques dirigidos se TELEGRAFÍAN (tinte rojo + llamarada) para que sean
+//  esquivables. Con la vida baja entra en FURIA: telegrafías más cortas,
+//  enfriamientos menores y embestidas más rápidas.
 //
-//  Está DESACOPLADO de sus efectos: en cada salto invoca el callback `onJump`
-//  (nada más). Quien lo instancia decide qué hace ese salto (p. ej. alternar la
-//  inversión de controles). Así el disparador vive fuera del jefe y la mecánica
-//  disparada no sabe nada del jefe.
+//  DESACOPLE: cada patrón que implica saltar invoca el callback `onJump` (una
+//  vez por patrón) y nada más; quien lo instancia decide el efecto (p. ej.
+//  alternar la inversión de controles). `target` es solo un proveedor de
+//  posición (el sprite del jugador); el jefe no conoce nada más de él.
 //
 //  Vida: se le daña saltándole encima (hit()). Al llegar a 0 → onDefeated().
 // ══════════════════════════════════════════════════════════════
@@ -17,23 +24,27 @@ export default class Boss {
      * @param {Phaser.Scene} scene
      * @param {number} x
      * @param {number} y
-     * @param {Object} opts  { hp, onJump, onHpChange, onDefeated }
+     * @param {Object} opts  { hp, target, onJump, onHpChange, onDefeated }
      */
     constructor(scene, x, y, opts = {}) {
-        this.scene   = scene;
-        this.maxHp   = opts.hp || 6;
-        this.hp      = this.maxHp;
-        this.onJump      = opts.onJump      || (() => {});
-        this.onHpChange  = opts.onHpChange  || (() => {});
-        this.onDefeated  = opts.onDefeated  || (() => {});
+        this.scene  = scene;
+        this.maxHp  = opts.hp || 5;
+        this.hp     = this.maxHp;
+        this.target     = opts.target     || null;    // sprite del jugador (solo posición)
+        this.onJump     = opts.onJump     || (() => {});
+        this.onHpChange = opts.onHpChange || (() => {});
+        this.onDefeated = opts.onDefeated || (() => {});
 
         this.isAlive      = true;
         this.isInvincible = false;
 
         this._buildSprite(x, y);
         this._buildFire(x, y);
-        this._scheduleNextJump();
+        this._scheduleNextMove(1400);   // primer patrón tras la intro
     }
+
+    /** Fase de furia (vida baja): más rápido y agresivo. */
+    get enraged() { return this.hp <= 2; }
 
     _buildSprite(x, y) {
         const scene = this.scene;
@@ -72,32 +83,127 @@ export default class Boss {
         this.fire.setDepth(8).startFollow(this.sprite, 0, -6);
     }
 
-    // ── Patrón de salto aleatorio ─────────────────────────────
-    _scheduleNextJump() {
-        if (!this.isAlive) return;
-        const delay = Phaser.Math.Between(900, 2100);   // intervalo aleatorio
-        this.jumpTimer = this.scene.time.delayedCall(delay, () => this._jump());
+    // ─────────────────────────────────────────────────────────
+    //  SELECTOR ALEATORIO DE PATRONES
+    // ─────────────────────────────────────────────────────────
+
+    _onGround() {
+        return this.sprite.body.blocked.down || this.sprite.body.touching.down;
     }
 
-    _jump() {
+    /** Dirección hacia el jugador (o aleatoria si no hay objetivo). */
+    _dirToTarget() {
+        if (!this.target || !this.target.active) return Phaser.Math.RND.pick([-1, 1]);
+        return (this.target.x >= this.sprite.x) ? 1 : -1;
+    }
+
+    _scheduleNextMove(delayOverride) {
         if (!this.isAlive) return;
-        // Solo salta si está apoyado (evita saltos en el aire)
-        if (this.sprite.body.blocked.down || this.sprite.body.touching.down) {
-            const dir = Phaser.Math.RND.pick([-1, 1]);
-            this.sprite.setVelocityX(dir * Phaser.Math.Between(70, 190));
-            this.sprite.setVelocityY(-Phaser.Math.Between(430, 580));   // altura aleatoria
+        const delay = delayOverride ?? (this.enraged
+            ? Phaser.Math.Between(450, 1000)
+            : Phaser.Math.Between(800, 1600));
+        this.moveTimer = this.scene.time.delayedCall(delay, () => this._doRandomMove());
+    }
+
+    _doRandomMove() {
+        if (!this.isAlive) return;
+        if (!this._onGround()) { this._scheduleNextMove(250); return; }   // espera a aterrizar
+
+        const roll = Math.random();
+        if      (roll < 0.28) this._moveJump();
+        else if (roll < 0.54) this._movePounce();
+        else if (roll < 0.80) this._moveCharge();
+        else                  this._moveHops();
+    }
+
+    // 1) SALTO alto en dirección aleatoria  (salta → onJump)
+    _moveJump() {
+        const dir = Phaser.Math.RND.pick([-1, 1]);
+        this.sprite.setVelocityX(dir * Phaser.Math.Between(100, 210));
+        this.sprite.setVelocityY(-Phaser.Math.Between(470, 600));
+        this.sprite.setFlipX(dir < 0);
+        this.onJump();
+        this._scheduleNextMove();
+    }
+
+    // 2) CAÍDA dirigida: salto parabólico apuntando al jugador  (salta → onJump)
+    _movePounce() {
+        this._telegraph(this.enraged ? 280 : 400, () => {
+            const vy = Phaser.Math.Between(520, 620);
+            const t  = (2 * vy) / 900;                                  // tiempo de vuelo aprox.
+            const dx = (this.target && this.target.active) ? (this.target.x - this.sprite.x) : 0;
+            const vx = Phaser.Math.Clamp(dx / t, -280, 280);
+            this.sprite.setVelocityX(vx);
+            this.sprite.setVelocityY(-vy);
+            this.sprite.setFlipX(vx < 0);
+            this.onJump();
+            this._scheduleNextMove();
+        });
+    }
+
+    // 3) EMBESTIDA a ras de suelo hacia el jugador  (no salta → no invierte)
+    _moveCharge() {
+        this._telegraph(this.enraged ? 300 : 430, () => {
+            const dir   = this._dirToTarget();
+            const speed = this.enraged ? Phaser.Math.Between(350, 440) : Phaser.Math.Between(290, 370);
             this.sprite.setFlipX(dir < 0);
-            this.onJump();   // ← DISPARADOR DESACOPLADO (p. ej. invertir controles)
-        }
-        this._scheduleNextJump();
+            this.sprite.setDragX(0);                                    // sin freno durante la carga
+            this.sprite.setVelocityX(dir * speed);
+            this.scene.time.delayedCall(Phaser.Math.Between(550, 750), () => {
+                if (!this.isAlive || !this.sprite.active) return;
+                this.sprite.setDragX(500);                              // recupera el freno
+                this._scheduleNextMove();
+            });
+        });
     }
 
-    // ── Daño (pisotón del jugador) ────────────────────────────
+    // 4) RÁFAGA: 3 saltitos rápidos persiguiendo al jugador  (UN salto → onJump una vez)
+    _moveHops() {
+        this.onJump();
+        const hop = (i) => {
+            if (!this.isAlive || !this.sprite.active) return;
+            if (i >= 3) { this._scheduleNextMove(); return; }
+            if (this._onGround()) {
+                const dir = this._dirToTarget();
+                this.sprite.setVelocityX(dir * Phaser.Math.Between(150, 215));
+                this.sprite.setVelocityY(-Phaser.Math.Between(300, 370));
+                this.sprite.setFlipX(dir < 0);
+                this.scene.time.delayedCall(400, () => hop(i + 1));
+            } else {
+                this.scene.time.delayedCall(140, () => hop(i));         // espera a aterrizar
+            }
+        };
+        hop(0);
+    }
+
+    /** Aviso previo de ataque (tinte rojo + llamarada): lo hace esquivable. */
+    _telegraph(ms, action) {
+        this.sprite.setTint(0xff7a5a);
+        if (this.fire) this.fire.setFrequency(16);
+        this.scene.time.delayedCall(ms, () => {
+            if (!this.sprite.active) return;
+            this.sprite.clearTint();
+            if (this.fire) this.fire.setFrequency(45);
+            if (this.isAlive) action();
+        });
+    }
+
+    // ─────────────────────────────────────────────────────────
+    //  DAÑO / DERROTA
+    // ─────────────────────────────────────────────────────────
+
+    /** Pisotón del jugador. */
     hit() {
         if (!this.isAlive || this.isInvincible) return false;
         this.hp--;
         this.onHpChange(this.hp, this.maxHp);
         if (this.hp <= 0) { this.defeat(); return true; }
+
+        // Al entrar en FURIA: aviso claro (flash + llama más intensa)
+        if (this.enraged) {
+            this.scene.cameras.main.flash(250, 255, 60, 20);
+            if (this.fire) this.fire.setFrequency(30);
+        }
 
         // Parpadeo + invencibilidad breve (evita multi-hit en un rebote)
         this.isInvincible = true;
@@ -111,7 +217,7 @@ export default class Boss {
 
     defeat() {
         this.isAlive = false;
-        if (this.jumpTimer) this.jumpTimer.remove();
+        if (this.moveTimer) this.moveTimer.remove();
         this.sprite.setVelocity(0, 0);
         this.sprite.body.setAllowGravity(false);
         if (this.fire) this.fire.stop();
